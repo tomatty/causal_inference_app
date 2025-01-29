@@ -91,7 +91,50 @@ if data is not None:
 
 
 st.sidebar.markdown('---')
-st.sidebar.markdown('### A/Aテストのリプレイ')
+st.sidebar.markdown('### A/Bテスト')
+
+
+# A/Bテスト設計
+if 'abtest_plan_clicked' not in st.session_state:
+    st.session_state.abtest_plan_clicked = False
+
+if st.sidebar.button('A/Bテスト設計'):
+    st.session_state.abtest_plan_clicked = not st.session_state.abtest_plan_clicked
+
+if st.session_state.abtest_plan_clicked:
+    st.markdown('---')
+    st.write(f"### A/Bテスト設計")
+
+    # A/Bテスト設計書用のデータフレームを作成
+    df = pd.DataFrame(
+        [
+        {"設計項目": "施策内容", "設計内容": None},
+        {"設計項目": "ゴールメトリクス", "設計内容": None},
+        {"設計項目": "ガードレールメトリクス", "設計内容": None},
+        {"設計項目": "割当単位", "設計内容": None},
+        {"設計項目": "割当比率", "設計内容": None},
+        {"設計項目": "サンプルサイズ", "設計内容": None},
+        {"設計項目": "SUTVAを満たしているか", "設計内容": None},
+        {"設計項目": "その他", "設計内容": None},
+    ]
+    )
+    edited_df = st.data_editor(df, num_rows="dynamic", width=1000)
+
+    if st.checkbox("サンプルサイズを計算"):
+
+        # パラメータを指定
+        alpha = st.number_input("有意水準 α", min_value=0.001, max_value=0.1, value=0.05, step=0.001, format="%.3f")
+        power = st.number_input("検出力 (1-β)", min_value=0.5, max_value=1.0, value=0.8, step=0.05, format="%.2f")
+        effect_size = st.number_input("効果量 (Cohen's d)", min_value=0.1, max_value=2.0, value=0.5, step=0.1, format="%.1f")
+
+        # サンプルサイズの計算
+        analysis = TTestIndPower()
+        sample_size = analysis.solve_power(effect_size=effect_size, alpha=alpha, power=power, alternative='two-sided')
+        sample_size = int(np.ceil(sample_size))  # 切り上げて整数にする
+
+        # 計算結果の表示
+        st.write(f"#### 必要なサンプルサイズ（各群）: **{sample_size}**")
+        st.write("注：計算はstatsmodels.stats.powerのTTestIndPowerを使用")
 
 
 # AAテストのリプレイ
@@ -187,53 +230,6 @@ if st.session_state.aatest_clicked:
                     st.error(f"A/Aテスト不合格（分布に差がある） p-value: {kstest_p:.5f}")
                 else:
                     st.success(f"A/Aテスト合格（分布に差があるとは言えない） p-value: {kstest_p:.5f}")
-
-
-st.sidebar.markdown('---')
-st.sidebar.markdown('### A/Bテスト')
-
-
-# A/Bテスト設計
-if 'abtest_plan_clicked' not in st.session_state:
-    st.session_state.abtest_plan_clicked = False
-
-if st.sidebar.button('A/Bテスト設計'):
-    st.session_state.abtest_plan_clicked = not st.session_state.abtest_plan_clicked
-
-if st.session_state.abtest_plan_clicked:
-    st.markdown('---')
-    st.write(f"### A/Bテスト設計")
-
-    # A/Bテスト設計書用のデータフレームを作成
-    df = pd.DataFrame(
-        [
-        {"設計項目": "施策内容", "設計内容": None},
-        {"設計項目": "ゴールメトリクス", "設計内容": None},
-        {"設計項目": "ガードレールメトリクス", "設計内容": None},
-        {"設計項目": "割当単位", "設計内容": None},
-        {"設計項目": "割当比率", "設計内容": None},
-        {"設計項目": "サンプルサイズ", "設計内容": None},
-        {"設計項目": "SUTVAを満たしているか", "設計内容": None},
-        {"設計項目": "その他", "設計内容": None},
-    ]
-    )
-    edited_df = st.data_editor(df, num_rows="dynamic", width=1000)
-
-    if st.checkbox("サンプルサイズを計算"):
-
-        # パラメータを指定
-        alpha = st.number_input("有意水準 α", min_value=0.001, max_value=0.1, value=0.05, step=0.001, format="%.3f")
-        power = st.number_input("検出力 (1-β)", min_value=0.5, max_value=1.0, value=0.8, step=0.05, format="%.2f")
-        effect_size = st.number_input("効果量 (Cohen's d)", min_value=0.1, max_value=2.0, value=0.5, step=0.1, format="%.1f")
-
-        # サンプルサイズの計算
-        analysis = TTestIndPower()
-        sample_size = analysis.solve_power(effect_size=effect_size, alpha=alpha, power=power, alternative='two-sided')
-        sample_size = int(np.ceil(sample_size))  # 切り上げて整数にする
-
-        # 計算結果の表示
-        st.write(f"#### 必要なサンプルサイズ（各群）: **{sample_size}**")
-        st.write("注：計算はstatsmodels.stats.powerのTTestIndPowerを使用")
 
 
 # 通常のA/Bテスト
