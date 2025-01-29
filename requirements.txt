@@ -8,3 +8,5 @@ seaborn
 statsmodels
 scipy
 tqdm
+rdrobust
+rddensity

@@ -9,6 +9,8 @@ import statsmodels.formula.api as smf
 import statsmodels.api as sm
 from statsmodels.iolib.summary2 import summary_col
 from statsmodels.stats.power import TTestIndPower
+from rdrobust import rdbwselect, rdplot, rdrobust
+import rddensity
 from tqdm import tqdm
 import os
 import io
@@ -350,10 +352,116 @@ if st.session_state.stratified_abtest_clicked:
 
 
 st.sidebar.markdown('---')
-st.sidebar.markdown('### RDD')
-st.sidebar.write('作成中')
+st.sidebar.markdown('### 観察データ分析')
 
 
-st.sidebar.markdown('---')
-st.sidebar.markdown('### DID')
-st.sidebar.write('作成中')
+# DID
+if 'did_clicked' not in st.session_state:
+    st.session_state.did_clicked = False
+
+if st.sidebar.button('DID'):
+    st.session_state.did_clicked = not st.session_state.did_clicked
+
+if st.session_state.did_clicked:
+    st.markdown('---')
+    st.write(f"### DID")
+
+    # グループ集計を表示
+    if st.checkbox("グループ集計を表示"):
+        # ユーザーに選択させる
+        selected_groupby = st.multiselect("グループを選択してください", data.columns)
+        selected_agg = st.selectbox("集計キーを選択してください", data.columns)
+
+        # グループ化と集計
+        if selected_groupby:
+            grouped_data = data.groupby(selected_groupby)[selected_agg].mean().reset_index()
+            st.write(grouped_data)
+        else:
+            st.write("カラムを選択してください")
+    
+    # プレトレンドテスト
+    if st.checkbox("プレトレンドテスト"):
+            fig, ax = plt.subplots()
+            sns.lineplot(data=grouped_data, x=selected_groupby[0], y=selected_agg, 
+                         hue=selected_groupby[1] if len(selected_groupby) > 1 else None, ax=ax)
+            st.pyplot(fig)
+    
+    # 回帰分析の実行
+    option = st.radio("クラスターの有無を選択してください", ("クラスターなし", "クラスターあり"))
+
+    if option == "クラスターなし":
+        formula = st.text_input("回帰式を入力してください", key='formula004')
+        if formula:
+            try:
+                result = smf.ols(formula, data=data).fit()
+                st.write("回帰分析の結果")
+                st.text(result.summary())
+            except Exception as e:
+                st.error(f"エラー: {e}")
+    
+    if option == "クラスターあり":
+        # クラスターを選択
+        cluster_col = st.selectbox("クラスターを選択してください", data.columns)
+        formula = st.text_input("回帰式を入力してください", key='formula004')
+        if formula:
+            try:
+                result = smf.ols(formula, data=data).fit()
+                st.write("回帰分析の結果")
+                # クラスター頑健標準誤差を計算
+                result_corrected = result.get_robustcov_results("cluster", groups=data[cluster_col])
+                st.text(result_corrected.summary())
+            except Exception as e:
+                st.error(f"エラー: {e}")
+
+
+# Sharp RDD
+if 'sharp_rdd_clicked' not in st.session_state:
+    st.session_state.sharp_rdd_clicked = False
+
+if st.sidebar.button('Sharp RDD'):
+    st.session_state.sharp_rdd_clicked = not st.session_state.sharp_rdd_clicked
+
+if st.session_state.sharp_rdd_clicked:
+    st.markdown('---')
+    st.write(f"### Sharp RDD ※ノンパラメトリックな局所多項式回帰")
+
+    if data is not None:
+        
+        # ユーザー入力
+        y_col = st.selectbox("従属変数 (y)", data.columns, index=0)
+        x_col = st.selectbox("独立変数 (x)", data.columns, index=1)
+        c_value = st.number_input("カットオフ値 (c)", value=10000, step=100)
+        binselect = st.selectbox("ビニング手法", ["es", "qsmv", "qser"], index=0)
+        ci_value = st.slider("信頼区間 (%)", min_value=50, max_value=99, value=95)
+
+        # 推定
+        result_rdd = rdrobust(y=data[y_col], x=data[x_col], c=c_value, all=True)
+        st.write("#### RD推定結果:")
+        st.write(result_rdd.__dict__)
+        
+        # プロット
+        st.write("#### RDプロット:")
+        fig = plt.figure()
+        rdplot(y=data[y_col], x=data[x_col], binselect=binselect, c=c_value, ci=ci_value,
+            title="Causal Effects", y_label=y_col, x_label=x_col)
+        st.pyplot(plt.gcf()) #gcf()を使用しないと表示されない
+
+        if st.checkbox("McCrary検定"):
+            # ヒストグラムの表示
+            st.write("#### ヒストグラム:")
+            fig, ax = plt.subplots()  # 明示的に Figure, Axes を取得
+            ax.hist(data[x_col], bins=30, edgecolor="black")
+            ax.set_xlabel(x_col)
+            ax.set_ylabel("Frequency")
+            st.pyplot(fig)
+
+            # McCraryの検定
+            st.write("#### McCraryの検定結果（連続性の検定）:")
+            result_mccrary = rddensity.rddensity(
+                X=data[x_col], c=c_value
+            )
+            st.write(result_mccrary.__dict__)
+
+            # 共変量のバランステスト
+
+            
