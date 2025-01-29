@@ -16,7 +16,6 @@ patsy
 graphviz
 watchdog
 pymc3==3.11.5
-theano-pymc==1.1.2
 arviz
 
 statsmodels
