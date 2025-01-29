@@ -5,19 +5,6 @@ plotly
 matplotlib
 seaborn
 
-scikit-learn
-psutil
-pynvml
-protobuf
-category_encoders
-optuna
-lightgbm
-patsy
-graphviz
-watchdog
-pymc3==3.11.5
-arviz
-
 statsmodels
 scipy
 tqdm
