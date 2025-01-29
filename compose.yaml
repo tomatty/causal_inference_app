@@ -1,0 +1,9 @@
+services:
+  streamlit_app:
+    build: .
+    ports:
+      - "8886:8888"
+    volumes:
+      - .:/work
+    environment:
+      - PYTHONPATH=/work
