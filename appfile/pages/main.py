@@ -1,8 +1,8 @@
+# ライブラリーのインストール
 import streamlit as st
 import numpy as np
 import pandas as pd
 import seaborn as sns
-sns.set()
 import matplotlib.pyplot as plt
 from scipy import stats
 import statsmodels.formula.api as smf
@@ -14,14 +14,18 @@ import io
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'module')))
 import hashlib
-
 from function import Function
 
 
+# ページの設定
+st.set_page_config(
+    page_title = "効果検証分析ツール",
+    page_icon = ":computer:"
+)
+
+
 st.sidebar.markdown('# 効果検証分析ツール')
-
-
-# セッションステートのリフレッシュ
+# セッションステートのリフレッシュボタン
 def reset_session_state():
     for key in st.session_state.keys():
         del st.session_state[key]
@@ -31,7 +35,6 @@ if st.sidebar.button('リフレッシュ'):
 
 
 st.write(f"### データセットの準備")
-
 # データセットのURLリスト
 DATASETS = {
     "CH2 Log Data": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch2_logdata.csv",
@@ -47,13 +50,15 @@ DATASETS = {
 }
 
 # ユーザーがデータの取得方法を選択
-option = st.radio("データの取得方法を選択してください", ("データセットを選択", "ファイルをアップロード"))
+option = st.radio("データの取得方法を選択してください", ("サンプルデータを選択", "ファイルをアップロード"))
 
+# 空データを用意
 data = None
 
-if option == "データセットを選択":
+# サンプルデータを選択した場合
+if option == "サンプルデータを選択":
     # ユーザーが選択するセレクトボックス
-    selected_dataset = st.selectbox("データセットを選択してください", list(DATASETS.keys()))
+    selected_dataset = st.selectbox("サンプルデータを選択してください", list(DATASETS.keys()))
     
     # 選択されたURL
     selected_url = DATASETS[selected_dataset]
@@ -64,21 +69,24 @@ if option == "データセットを選択":
         return pd.read_csv(url)
     
     data = load_data(selected_url)
+
+# ファイルアップロードを選択した場合
 elif option == "ファイルをアップロード":
     uploaded_file = st.file_uploader("CSVファイルをアップロードしてください", type=["csv"])
     if uploaded_file is not None:
         data = pd.read_csv(uploaded_file)
 
+# データセットが空でない場合
 if data is not None:
-    st.write(f"データフレーム")
-    st.dataframe(data)
-    st.write("データフレームの統計情報")
-    st.write(data.describe())
-    st.write("相関行列")
-    corr_matrix = data.corr()
-    fig_corr, ax = plt.subplots(figsize=(10, 6))
-    sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
-    st.pyplot(fig_corr)
+    if st.checkbox("データフレームを表示"):
+        st.dataframe(data)
+    if st.checkbox("データフレームの統計情報を表示"):
+        st.write(data.describe())
+    if st.checkbox("相関行列を表示"):
+        corr_matrix = data.corr()
+        fig_corr, ax = plt.subplots(figsize=(10, 6))
+        sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
+        st.pyplot(fig_corr)
 
 
 st.sidebar.markdown('---')
@@ -99,7 +107,9 @@ if st.session_state.aatest_clicked:
     # ユーザーがデータの取得方法を選択
     option = st.radio("回帰分析の手法を選択してください", ("クラスター頑健標準誤差を使用しない", "クラスター頑健標準誤差を使用する"))
 
+    # クラスター頑健標準誤差を使用しない場合
     if option == "クラスター頑健標準誤差を使用しない":
+
         # カラム選択（hash_col, outcome）
         hash_col = st.selectbox("ハッシュ化に使用するカラムを選択してください", data.columns)
         outcome = st.selectbox("結果変数として使用するカラムを選択してください", data.columns)
@@ -107,7 +117,7 @@ if st.session_state.aatest_clicked:
         # シミュレーションの設定
         num_replays = st.number_input("リプレイ回数", min_value=100, max_value=1000, value=300, step=50)
 
-        # ランダム生成器の作成
+        # 乱数生成器の作成
         def assign_treatment_randomly(hash_col, salt):
             return int(hashlib.sha256(f"{hash_col}_{salt}".encode()).hexdigest(), 16) % 2
 
@@ -137,6 +147,7 @@ if st.session_state.aatest_clicked:
                 else:
                     st.success(f"A/Aテスト合格（分布に差があるとは言えない） p-value: {kstest_p:.5f}")
 
+    # クラスター頑健標準誤差を使用する場合
     if option == "クラスター頑健標準誤差を使用する":
         # カラム選択（hash_col, outcome）
         hash_col = st.selectbox("ハッシュ化に使用するカラムを選択してください(クラスター)", data.columns)
@@ -193,7 +204,9 @@ if st.session_state.normal_abtest_clicked:
     st.write(f"### 通常のA/Bテスト")
     option = st.radio("ATEの計算方法を選択してください", ("集計比較", "回帰分析"))
 
+    # 集計比較の場合
     if option == "集計比較":
+
     # カラム選択
         col1, col2 = st.columns(2)
         with col1:
@@ -201,7 +214,7 @@ if st.session_state.normal_abtest_clicked:
         with col2:
             response_col = st.selectbox("結果変数を選択", data.columns)
         
-        # 処理
+        # トリートメント群ごとに集計
         df_result = data.groupby(treatment_col)[response_col].mean() * 100
         
         # 結果表示
@@ -216,14 +229,18 @@ if st.session_state.normal_abtest_clicked:
         st.write("ATEの計算とweltchのt検定の結果")
         st.write(f"#### ATE: {ate:.5f}, t_statistic: {t_stat:.5f}, p_value: {p_value:.5f}")
 
+    # 回帰分析の場合
     if option == "回帰分析":
+
         st.write("共変量バランステスト")
         is_treatment_col = st.selectbox("トリートメント群のカラムを選択してください", options=data.columns, index=0)
         selected_columns = st.multiselect(
         "集計するカラムを選択してください",
         options=[col for col in data.columns if col != is_treatment_col],
         )
+        
         if selected_columns:
+            # トリートメント群ごとに集計
             df_balance_test = data.groupby(is_treatment_col)[selected_columns].mean()
             st.dataframe(df_balance_test)
         
@@ -252,7 +269,7 @@ if st.session_state.cluster_abtest_clicked:
     # カラム選択
     cluster_col = st.selectbox("クラスターを選択してください", data.columns)
 
-    # クラスターの種類
+    # クラスターの種類を表示
     unique_cluster = data[cluster_col].unique()
     st.write("クラスターの種類")
     st.write(unique_cluster)
@@ -292,10 +309,11 @@ if st.session_state.stratified_abtest_clicked:
             st.error(f"エラー: {e}")
 
 
-
 st.sidebar.markdown('---')
 st.sidebar.markdown('### RDD')
+st.sidebar.write('作成中')
 
 
 st.sidebar.markdown('---')
 st.sidebar.markdown('### DID')
+st.sidebar.write('作成中')
