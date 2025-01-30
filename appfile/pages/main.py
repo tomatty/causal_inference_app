@@ -539,6 +539,6 @@ if st.session_state.fuzzy_rdd_clicked:
 
         # 推定
         st.write("#### RD推定結果:")
-        result_fuzzy_rdd = rdrobust(y=data[y_col], x=data[x_col], fuzzy=fuzzy_col, c=c_value, all=True)
+        result_fuzzy_rdd = rdrobust(y=data[y_col], x=data[x_col], fuzzy=data[fuzzy_col], c=c_value, all=True)
         #st.write(result_fuzzy_rdd)
         st.write(result_fuzzy_rdd.__dict__)
