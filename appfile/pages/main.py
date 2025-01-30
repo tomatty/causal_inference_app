@@ -446,7 +446,7 @@ if st.session_state.sharp_rdd_clicked:
             title="Causal Effects", y_label=y_col, x_label=x_col)
         st.pyplot(plt.gcf()) #gcf()を使用しないと表示されない
 
-        if st.checkbox("McCrary検定"):
+        if st.checkbox("McCrary検定（連続性の検定）"):
             # ヒストグラムの表示
             st.write("#### ヒストグラム:")
             fig, ax = plt.subplots()  # 明示的に Figure, Axes を取得
@@ -462,6 +462,17 @@ if st.session_state.sharp_rdd_clicked:
             )
             st.write(result_mccrary.__dict__)
 
-            # 共変量のバランステスト
+        # 共変量のバランステスト
+        if st.checkbox("共変量のバランステスト(カットオフ前後での同質性を確認)"):
+            # バランステスト
+            selected_covs = st.multiselect("バランステストの共変量を選択してください", data.columns)
+            covs = data[selected_covs]
+            balance = pd.DataFrame(columns=["RD Effect", "Robust p-val"], index=selected_covs)
 
-            
+            for z in covs.columns:
+                est = rdrobust(y=covs[z], x=data[x_col], c=c_value)
+                balance.loc[z, "RD Effect"] = est.Estimate["tau.us"].values[0]
+                balance.loc[z, "Robust p-val"] = est.pv.iloc[2].values[0]
+
+            st.write("#### バランステストの結果:")
+            st.dataframe(balance)
