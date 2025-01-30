@@ -28,13 +28,14 @@ st.set_page_config(
 
 
 st.sidebar.markdown('# 効果検証分析ツール')
-# セッションステートのリフレッシュボタン
+
+#リフレッシュボタンの実装
 def reset_session_state():
-    for key in st.session_state.keys():
-        del st.session_state[key]
+    st.session_state.clear()  # 全キーを安全に削除
+
 if st.sidebar.button('リフレッシュ'):
     reset_session_state()
-    st.experimental_rerun()
+    st.rerun() # st.experimental_rerun()は使えない
 
 
 st.write(f"### データセットの準備")
