@@ -476,3 +476,52 @@ if st.session_state.sharp_rdd_clicked:
 
             st.write("#### バランステストの結果:")
             st.dataframe(balance)
+
+
+# Fuzzy RDD
+if 'fuzzy_rdd_clicked' not in st.session_state:
+    st.session_state.fuzzy_rdd_clicked = False
+
+if st.sidebar.button('Fuzzy RDD'):
+    st.session_state.fuzzy_rdd_clicked = not st.session_state.fuzzy_rdd_clicked
+
+if st.session_state.fuzzy_rdd_clicked:
+    st.markdown('---')
+    st.write(f"### fuzzy RDD ※rdrobustを使用")
+
+    if data is not None:
+        
+        # ユーザー入力
+        y_col = st.selectbox("従属変数 (y)", data.columns, index=0)
+        x_col = st.selectbox("独立変数 (x)", data.columns, index=1)
+        fuzzy_col = st.selectbox("トリートメント変数", data.columns, index=2)
+        c_value = st.number_input("カットオフ値 (c)", value=10000, step=100)
+
+        # グラフの表示
+        st.write("#### グラフ:")
+        # ラベルごとにデータを分ける
+        df_label0 = data[data[fuzzy_col] == 0]
+        df_label1 = data[data[fuzzy_col] == 1]
+        
+        # 散布図の作成
+        fig, ax = plt.subplots()
+        ax.scatter(df_label0[x_col], df_label0[y_col], c="gray", label="0", marker="s")
+        ax.scatter(df_label1[x_col], df_label1[y_col], c="gray", label="1", marker="x")
+        
+        # 閾値線の描画（閾値は適宜調整）
+        threshold = c_value
+        ax.axvline(x=threshold, color="black", linestyle="--")
+        
+        # 軸ラベルと凡例の追加
+        ax.set_xlabel(x_col)
+        ax.set_ylabel(y_col)
+        ax.legend()
+        
+        # Streamlit で表示
+        st.pyplot(fig)
+
+        # 推定
+        st.write("#### RD推定結果:")
+        result_fuzzy_rdd = rdrobust(y=data[y_col], x=data[x_col], fuzzy=fuzzy_col, c=c_value, all=True)
+        #st.write(result_fuzzy_rdd)
+        st.write(result_fuzzy_rdd.__dict__)
