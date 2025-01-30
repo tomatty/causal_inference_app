@@ -53,7 +53,10 @@ DATASETS = {
 }
 
 # ユーザーがデータの取得方法を選択
-option = st.radio("データの取得方法を選択してください", ("サンプルデータを選択", "ファイルをアップロード"))
+# `key` を明示的に初期化
+#if "data_selection_method" not in st.session_state:
+#    st.session_state["data_selection_method"] = "サンプルデータを選択"  # デフォルト値を設定
+option = st.radio("データの取得方法を選択してください", ("サンプルデータを選択", "ファイルをアップロード"), key="data_selection_method")
 
 # 空データを用意
 data = None
@@ -269,7 +272,11 @@ if st.session_state.normal_abtest_clicked:
         ate = df_result[1] - df_result[0]
         t_stat, p_value = stats.ttest_ind(df_treatment, df_control)
         st.write("ATEの計算とweltchのt検定の結果")
-        st.write(f"#### ATE: {ate:.5f}, t_statistic: {t_stat:.5f}, p_value: {p_value:.5f}")
+        col1, col2, col3 = st.columns(3)
+        col1.metric("ATE", f"{ate:.5f}", border=True)
+        col2.metric("T_statistic", f"{t_stat:.5f}", border=True)
+        col3.metric("P_value", f"{p_value:.5f}", border=True)
+        #st.write(f"#### ATE: {ate:.5f}, t_statistic: {t_stat:.5f}, p_value: {p_value:.5f}")
 
     # 回帰分析の場合
     if option == "回帰分析":
