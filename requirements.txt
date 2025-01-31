@@ -15,5 +15,5 @@ jinja2
 causallib
 
 scikit-learn
-tensorflow
-tensorflow_probability
+tensorflow==2.9.0
+tensorflow_probability==0.17.0
