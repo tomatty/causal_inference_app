@@ -11,6 +11,9 @@ from statsmodels.iolib.summary2 import summary_col
 from statsmodels.stats.power import TTestIndPower
 from rdrobust import rdbwselect, rdplot, rdrobust
 import rddensity
+from causallib.estimation import IPW, PropensityMatching,StratifiedStandardization
+from causallib.evaluation import evaluate
+from sklearn.linear_model import LogisticRegression
 #from causalimpact import CausalImpact
 from tqdm import tqdm
 import os
@@ -372,6 +375,117 @@ if st.session_state.stratified_abtest_clicked:
 
 st.sidebar.markdown('---')
 st.sidebar.markdown('### 観察データ分析')
+
+
+# 傾向スコア
+if 'propensity_clicked' not in st.session_state:
+    st.session_state.propensity_clicked = False
+
+if st.sidebar.button('傾向スコア'):
+    st.session_state.propensity_clicked = not st.session_state.propensity_clicked
+
+if st.session_state.propensity_clicked:
+    st.markdown('---')
+    st.write(f"### 傾向スコア")
+    st.write(f"### 作成中")
+
+    option = st.radio("傾向スコアの手法を選択してください", ("マッチング", "IPW"))
+
+    # マッチング
+    if option == "マッチング":
+
+        # 欠損値の確認
+        if data.isnull().sum().sum() > 0:
+            st.warning("データに欠損値が含まれています。欠損値は中央値で補完されます。")
+
+        # ユーザーが選択するためのUIを作成
+        columns = data.columns.tolist()
+        selected_x = st.multiselect("特徴量を選択", columns)
+        selected_a = st.selectbox("トリートメント変数を選択", columns)
+        selected_y = st.selectbox("結果変数を選択", columns)
+
+        #if selected_x and selected_a and selected_y:
+        if st.button("推定"):
+            # データを分割
+            X = data[selected_x]
+            a = data[selected_a]
+            y = data[selected_y]
+
+            # 欠損値処理（X のみ）
+            X.fillna(X.median(), inplace=True)
+
+            # 傾向スコアモデルを定義
+            learner = LogisticRegression(solver="liblinear", class_weight="balanced")
+
+            # 傾向スコアマッチング
+            pm = PropensityMatching(learner=learner)
+            pm.fit(X, a, y)
+
+            # ATEの計算
+            outcomes = pm.estimate_population_outcome(X, a)
+            effect = pm.estimate_effect(outcomes[1], outcomes[0])
+
+            # 結果の表示
+            st.write("#### 推定結果")
+            col1, col2, col3 = st.columns(3)
+            col1.metric("未処置群の平均アウトカム", f"{outcomes[0]:.3f}", border=True)
+            col2.metric("処置群の平均アウトカム", f"{outcomes[1]:.3f}", border=True)
+            col3.metric("平均処置効果 (ATE)", f"{effect['diff']:.3f}", border=True)
+
+    # IPW
+    if option == "IPW":
+
+        # 欠損値の確認
+        if data.isnull().sum().sum() > 0:
+            st.warning("データに欠損値が含まれています。欠損値は中央値で補完されます。")
+        
+        # ユーザーが選択するためのUIを作成
+        columns = data.columns.tolist()
+        selected_x = st.multiselect("特徴量を選択", columns)
+        selected_a = st.selectbox("トリートメント変数を選択", columns)
+        selected_y = st.selectbox("結果変数を選択", columns)
+        asmd_thresh = st.number_input("ASMDのカットオフ値", value=0.1, step=0.01)
+
+        #if selected_x and selected_a and selected_y:
+        if st.button("推定"):
+            # データを分割
+            X = data[selected_x]
+            a = data[selected_a]
+            y = data[selected_y]
+
+            # 欠損値処理（X のみ）
+            X.fillna(X.median(), inplace=True)
+
+            # 傾向スコアモデルを定義
+            learner = LogisticRegression(solver="liblinear", class_weight="balanced")
+
+            #傾向スコアを算出し、IPWを実施
+            ipw = IPW(learner = learner)
+            ipw.fit(X, a)
+
+            # ATEの計算
+            outcomes = ipw.estimate_population_outcome(X, a, y)
+            effect = ipw.estimate_effect(outcomes[1], outcomes[0])
+
+            # 結果の表示
+            st.write("#### 推定結果")
+            col1, col2, col3 = st.columns(3)
+            col1.metric("未処置群の平均アウトカム", f"{outcomes[0]:.3f}", border=True)
+            col2.metric("処置群の平均アウトカム", f"{outcomes[1]:.3f}", border=True)
+            col3.metric("平均処置効果 (ATE)", f"{effect['diff']:.3f}", border=True)
+
+            # 共変量のバランスを表示
+            st.write("#### 共変量のバランス")
+            results = evaluate(ipw, X, a, y)
+            fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+            results.plot_covariate_balance(kind="love", ax=ax, thresh=asmd_thresh)
+            st.pyplot(fig)
+
+            # 重みの分布を表示
+            st.write("#### 分布")
+            fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+            results.plot_weight_distribution(ax=ax)
+            st.pyplot(fig)
 
 
 # DID
