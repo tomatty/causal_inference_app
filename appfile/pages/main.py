@@ -14,7 +14,7 @@ import rddensity
 from causallib.estimation import IPW, PropensityMatching,StratifiedStandardization
 from causallib.evaluation import evaluate
 from sklearn.linear_model import LogisticRegression
-from causalimpact import CausalImpact
+#from causalimpact import CausalImpact
 from tqdm import tqdm
 import os
 import io
@@ -557,30 +557,31 @@ if st.session_state.causal_impact_clicked:
     st.markdown('---')
     st.write(f"### Causal Impact")
     st.info("作成中のため使用できません。リリースまでしばらくお待ちください。", icon=None)
+    st.error("ModuleNotFoundError: No module named 'tf_keras'", icon=None)
 
-    # 期間情報を入力させる
-    col1, col2 = st.columns(2)
-    with col1:
-        pre_start = st.number_input('施策前の開始日', min_value=1, value=1)
-    with col2:
-        pre_end = st.number_input('施策前の終了日', min_value=pre_start, value=90)
+#    # 期間情報を入力させる
+#    col1, col2 = st.columns(2)
+#    with col1:
+#        pre_start = st.number_input('施策前の開始日', min_value=1, value=1)
+#    with col2:
+#        pre_end = st.number_input('施策前の終了日', min_value=pre_start, value=90)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        post_start = st.number_input('施策後の開始日', min_value=pre_end+1, value=91)
-    with col2:
-        post_end = st.number_input('施策後の終了日', min_value=post_start, value=119)
+#    col1, col2 = st.columns(2)
+#    with col1:
+#        post_start = st.number_input('施策後の開始日', min_value=pre_end+1, value=91)
+#    with col2:
+#        post_end = st.number_input('施策後の終了日', min_value=post_start, value=119)
 
-    # CausalImpactの学習・推定
-    if st.button('Causal Impact 実行'):
-        ci = CausalImpact(data, [pre_start, pre_end], [post_start, post_end])
+#    # CausalImpactの学習・推定
+#    if st.button('Causal Impact 実行'):
+#        ci = CausalImpact(data, [pre_start, pre_end], [post_start, post_end])
 
-        # 結果の可視化
-        st.write('Causal Impact 結果:')
-        st.pyplot(ci.plot())
+#        # 結果の可視化
+#        st.write('Causal Impact 結果:')
+#        st.pyplot(ci.plot())
 
-        #推定結果の要点を出力
-        st.write(ci.summary())
+#        #推定結果の要点を出力
+#        st.write(ci.summary())
 
 
 # Sharp RDD
