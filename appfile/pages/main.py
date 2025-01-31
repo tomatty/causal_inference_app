@@ -387,7 +387,6 @@ if st.sidebar.button('傾向スコア'):
 if st.session_state.propensity_clicked:
     st.markdown('---')
     st.write(f"### 傾向スコア")
-    st.write(f"### 作成中")
 
     option = st.radio("傾向スコアの手法を選択してください", ("マッチング", "IPW"))
 
