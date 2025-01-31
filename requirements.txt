@@ -10,7 +10,7 @@ scipy
 tqdm
 rdrobust
 rddensity
-tfcausalimpact==0.0.18
+causalimpact
 jinja2
 causallib
 
