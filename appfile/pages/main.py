@@ -225,6 +225,8 @@ if st.session_state.aatest_clicked:
             return int(hashlib.sha256(f"{hash_col}_{salt}".encode()).hexdigest(), 16) % 2
 
         if st.button("A/Aテストを実行"):
+                # プログレスバーの初期化
+                progress_bar = st.progress(0)
                 replays = []
 
                 # リプレイの実行
@@ -236,6 +238,13 @@ if st.session_state.aatest_clicked:
                     p_value = result_corrected.pvalues[result_corrected.model.exog_names.index(treatment_col)]
                     replays.append(p_value)
 
+                    # プログレスバーを更新
+                    progress_bar.progress((i + 1) / num_replays)
+
+                # 処理完了後、バーを100%にしてメッセージを表示
+                progress_bar.progress(1.0)
+                st.success("リプレイ完了")
+                
                 # ヒストグラムの可視化
                 fig, ax = plt.subplots(figsize=(6, 4))
                 ax.hist(replays, bins=20, edgecolor="black", alpha=0.7)
