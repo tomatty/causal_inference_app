@@ -145,7 +145,7 @@ if st.session_state.abtest_plan_clicked:
 
         # 計算結果の表示
         st.metric("必要なサンプルサイズ（各群）", f"{sample_size}", border=True)
-        st.write("注：計算はstatsmodels.stats.powerのTTestIndPowerを使用")
+        st.info("注：statsmodels.stats.powerのTTestIndPowerを使用して計算しています")
 
 
 # AAテストのリプレイ
@@ -205,6 +205,7 @@ if st.session_state.aatest_clicked:
                 st.pyplot(fig)
 
                 # コルモゴロフ–スミルノフ検定
+                st.write("コルモゴロフ–スミルノフ検定の結果：")
                 kstest_p = stats.kstest(replays, "uniform", args=(0, 1)).pvalue
                 if kstest_p < 0.05:
                     st.error(f"A/Aテスト不合格（分布に差がある） p-value: {kstest_p:.5f}")
@@ -244,7 +245,7 @@ if st.session_state.aatest_clicked:
                 # 処理完了後、バーを100%にしてメッセージを表示
                 progress_bar.progress(1.0)
                 st.success("リプレイ完了")
-                
+
                 # ヒストグラムの可視化
                 fig, ax = plt.subplots(figsize=(6, 4))
                 ax.hist(replays, bins=20, edgecolor="black", alpha=0.7)
@@ -254,6 +255,7 @@ if st.session_state.aatest_clicked:
                 st.pyplot(fig)
 
                 # コルモゴロフ–スミルノフ検定
+                st.write("コルモゴロフ–スミルノフ検定の結果：")
                 kstest_p = stats.kstest(replays, "uniform", args=(0, 1)).pvalue
                 if kstest_p < 0.05:
                     st.error(f"A/Aテスト不合格（分布に差がある） p-value: {kstest_p:.5f}")
