@@ -17,3 +17,4 @@ causallib
 scikit-learn
 tensorflow
 tensorflow_probability
+tf-keras
