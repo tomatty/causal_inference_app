@@ -567,8 +567,8 @@ if st.sidebar.button('Causal Impact'):
 if st.session_state.causal_impact_clicked:
     st.markdown('---')
     st.write(f"### Causal Impact")
-    st.info("作成中のため使用できません。リリースまでしばらくお待ちください。", icon=None)
-    st.error("ModuleNotFoundError: No module named 'tf_keras'", icon=None)
+    #st.info("作成中のため使用できません。リリースまでしばらくお待ちください。", icon=None)
+    #st.error("ModuleNotFoundError: No module named 'tf_keras'", icon=None)
 
     # 期間情報を入力させる
     col1, col2 = st.columns(2)
