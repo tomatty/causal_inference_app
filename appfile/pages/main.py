@@ -14,7 +14,7 @@ import rddensity
 from causallib.estimation import IPW, PropensityMatching,StratifiedStandardization
 from causallib.evaluation import evaluate
 from sklearn.linear_model import LogisticRegression
-#from causalimpact import CausalImpact
+from causalimpact import CausalImpact
 from tqdm import tqdm
 import os
 import io
