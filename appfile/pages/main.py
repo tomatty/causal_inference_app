@@ -144,7 +144,10 @@ if st.session_state.abtest_plan_clicked:
         sample_size = int(np.ceil(sample_size))  # 切り上げて整数にする
 
         # 計算結果の表示
-        st.metric("必要なサンプルサイズ（各群）", f"{sample_size}", border=True)
+        col1, col2, col3 = st.columns(3)
+        col1.metric("トリートメント群のサンプルサイズ", f"{sample_size}", border=True)
+        col2.metric("コントロール群のサンプルサイズ", f"{sample_size}", border=True)
+        col3.metric("合計サンプルサイズ", f"{sample_size*2}", border=True)
         st.info("注：statsmodels.stats.powerのTTestIndPowerを使用して計算しています")
 
 
