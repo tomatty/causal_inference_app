@@ -137,17 +137,19 @@ if st.session_state.abtest_plan_clicked:
         alpha = st.number_input("有意水準 α", min_value=0.001, max_value=0.1, value=0.05, step=0.001, format="%.3f")
         power = st.number_input("検出力 (1-β)", min_value=0.5, max_value=1.0, value=0.8, step=0.05, format="%.2f")
         effect_size = st.number_input("効果量 (Cohen's d)", min_value=0.1, max_value=2.0, value=0.5, step=0.1, format="%.1f")
+        allocation_ratio = st.number_input("割当比率（トリートメント群 : コントロール群）", min_value=0.1, max_value=10.0, value=1.0, step=0.1, format="%.1f")
 
         # サンプルサイズの計算
         analysis = TTestIndPower()
-        sample_size = analysis.solve_power(effect_size=effect_size, alpha=alpha, power=power, alternative='two-sided')
-        sample_size = int(np.ceil(sample_size))  # 切り上げて整数にする
+        control_size = analysis.solve_power(effect_size=effect_size, alpha=alpha, power=power, alternative='two-sided', ratio=allocation_ratio)
+        control_size = int(np.ceil(control_size))  # コントロール群のサイズ（切り上げ）
+        treatment_size = int(np.ceil(control_size * allocation_ratio))  # トリートメント群のサイズ
 
         # 計算結果の表示
         col1, col2, col3 = st.columns(3)
-        col1.metric("トリートメント群", f"{sample_size}", border=True)
-        col2.metric("コントロール群", f"{sample_size}", border=True)
-        col3.metric("合計サンプルサイズ", f"{sample_size*2}", border=True)
+        col1.metric("トリートメント群", f"{treatment_size}", border=True)
+        col2.metric("コントロール群", f"{control_size}", border=True)
+        col3.metric("合計サンプルサイズ", f"{treatment_size + control_size}", border=True)
         st.info("注：statsmodels.stats.powerのTTestIndPowerを使用して計算しています")
 
 
