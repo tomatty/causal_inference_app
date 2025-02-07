@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+
 from scipy import stats
 import statsmodels.formula.api as smf
 import statsmodels.api as sm
@@ -15,6 +16,12 @@ from causallib.estimation import IPW, PropensityMatching,StratifiedStandardizati
 from causallib.evaluation import evaluate
 from sklearn.linear_model import LogisticRegression
 from causalimpact import CausalImpact
+
+# from causalml.inference.meta import BaseSRegressor, BaseTRegressor, BaseXRegressor, BaseRRegressor, BaseSClassifier, BaseTClassifier, BaseXClassifier, BaseRClassifier
+# from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+# from xgboost import XGBClassifier, XGBRegressor
+# from lightgbm import LGBMClassifier, LGBMRegressor
+
 from tqdm import tqdm
 import os
 import io
@@ -102,7 +109,7 @@ if data is not None:
 
 
 st.sidebar.markdown('---')
-st.sidebar.markdown('### A/Bテスト')
+st.sidebar.markdown('### RCT(A/Bテスト)')
 
 
 # A/Bテスト設計
@@ -147,9 +154,9 @@ if st.session_state.abtest_plan_clicked:
 
         # 計算結果の表示
         col1, col2, col3 = st.columns(3)
-        col1.metric("トリートメント群", f"{treatment_size}", border=True)
-        col2.metric("コントロール群", f"{control_size}", border=True)
-        col3.metric("合計サンプルサイズ", f"{treatment_size + control_size}", border=True)
+        col1.metric("トリートメント群", f"{treatment_size:,}", border=True)
+        col2.metric("コントロール群", f"{control_size:,}", border=True)
+        col3.metric("合計サンプルサイズ", f"{treatment_size + control_size:,}", border=True)
         st.info("注：statsmodels.stats.powerのTTestIndPowerを使用して計算しています")
 
 
@@ -304,9 +311,9 @@ if st.session_state.normal_abtest_clicked:
         t_stat, p_value = stats.ttest_ind(df_treatment, df_control)
         st.write("ATEの計算とweltchのt検定の結果")
         col1, col2, col3 = st.columns(3)
-        col1.metric("ATE", f"{ate:.5f}", border=True)
-        col2.metric("T_statistic", f"{t_stat:.5f}", border=True)
-        col3.metric("P_value", f"{p_value:.5f}", border=True)
+        col1.metric("ATE", f"{ate:,.3f}", border=True)
+        col2.metric("T_statistic", f"{t_stat:,.5f}", border=True)
+        col3.metric("P_value", f"{p_value:,.5f}", border=True)
         #st.write(f"#### ATE: {ate:.5f}, t_statistic: {t_stat:.5f}, p_value: {p_value:.5f}")
 
     # 回帰分析の場合
@@ -443,9 +450,9 @@ if st.session_state.propensity_clicked:
             # 結果の表示
             st.write("#### 推定結果")
             col1, col2, col3 = st.columns(3)
-            col1.metric("未処置群の平均アウトカム", f"{outcomes[0]:.3f}", border=True)
-            col2.metric("処置群の平均アウトカム", f"{outcomes[1]:.3f}", border=True)
-            col3.metric("平均処置効果 (ATE)", f"{effect['diff']:.3f}", border=True)
+            col1.metric("未処置群の平均アウトカム", f"{outcomes[0]:,.3f}", border=True)
+            col2.metric("処置群の平均アウトカム", f"{outcomes[1]:,.3f}", border=True)
+            col3.metric("平均処置効果 (ATE)", f"{effect['diff']:,.3f}", border=True)
 
     # IPW
     if option == "IPW":
@@ -485,9 +492,9 @@ if st.session_state.propensity_clicked:
             # 結果の表示
             st.write("#### 推定結果")
             col1, col2, col3 = st.columns(3)
-            col1.metric("未処置群の平均アウトカム", f"{outcomes[0]:.3f}", border=True)
-            col2.metric("処置群の平均アウトカム", f"{outcomes[1]:.3f}", border=True)
-            col3.metric("平均処置効果 (ATE)", f"{effect['diff']:.3f}", border=True)
+            col1.metric("未処置群の平均アウトカム", f"{outcomes[0]:,.3f}", border=True)
+            col2.metric("処置群の平均アウトカム", f"{outcomes[1]:,.3f}", border=True)
+            col3.metric("平均処置効果 (ATE)", f"{effect['diff']:,.3f}", border=True)
 
             # 共変量のバランスを表示
             st.write("#### 共変量のバランス")
@@ -711,3 +718,15 @@ if st.session_state.fuzzy_rdd_clicked:
         result_fuzzy_rdd = rdrobust(y=data[y_col], x=data[x_col], fuzzy=data[fuzzy_col], c=c_value, all=True)
         #st.write(result_fuzzy_rdd)
         st.write(result_fuzzy_rdd.__dict__)
+
+
+# # メタラーナ
+# if 'metalearner_clicked' not in st.session_state:
+#     st.session_state.metalearner_clicked = False
+
+# if st.sidebar.button('Meta Learner'):
+#     st.session_state.metalearner_clicked = not st.session_state.metalearner_clicked
+
+# if st.session_state.metalearner_clicked:
+#     st.markdown('---')
+#     st.write(f"### Meta Learner")

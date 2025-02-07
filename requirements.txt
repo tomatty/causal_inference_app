@@ -13,8 +13,11 @@ rddensity
 tfcausalimpact
 jinja2
 causallib
+causalml
 
 scikit-learn
 tensorflow
 tensorflow_probability
 tf-keras
+xgboost
+lightgbm
