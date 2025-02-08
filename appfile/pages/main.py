@@ -17,10 +17,11 @@ from causallib.evaluation import evaluate
 from sklearn.linear_model import LogisticRegression
 from causalimpact import CausalImpact
 
-# from causalml.inference.meta import BaseSRegressor, BaseTRegressor, BaseXRegressor, BaseRRegressor, BaseSClassifier, BaseTClassifier, BaseXClassifier, BaseRClassifier
-# from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-# from xgboost import XGBClassifier, XGBRegressor
-# from lightgbm import LGBMClassifier, LGBMRegressor
+from causalml.inference.meta import BaseSLearner, BaseTLearner, BaseXLearner, BaseRLearner
+from sklearn.impute import SimpleImputer
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
 
 from tqdm import tqdm
 import os
@@ -106,6 +107,9 @@ if data is not None:
         fig_corr, ax = plt.subplots(figsize=(10, 6))
         sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
         st.pyplot(fig_corr)
+    if st.checkbox("欠損値の有無を表示"):
+        missing_number = data.isnull().sum()
+        st.write(missing_number)
 
 
 st.sidebar.markdown('---')
@@ -720,13 +724,274 @@ if st.session_state.fuzzy_rdd_clicked:
         st.write(result_fuzzy_rdd.__dict__)
 
 
-# # メタラーナ
-# if 'metalearner_clicked' not in st.session_state:
-#     st.session_state.metalearner_clicked = False
+# メタラーナ
+if 'metalearner_clicked' not in st.session_state:
+    st.session_state.metalearner_clicked = False
 
-# if st.sidebar.button('Meta Learner'):
-#     st.session_state.metalearner_clicked = not st.session_state.metalearner_clicked
+if st.sidebar.button('Meta Learner'):
+    st.session_state.metalearner_clicked = not st.session_state.metalearner_clicked
 
-# if st.session_state.metalearner_clicked:
-#     st.markdown('---')
-#     st.write(f"### Meta Learner")
+if st.session_state.metalearner_clicked:
+    st.markdown('---')
+    st.write(f"### Meta Learner")
+
+    option = st.radio("メタラーナの種類を選択してください", ("S-Learner", "T-Learner", "X-Learner", "R-Learner"), key="meta_learner_method")
+
+    # S-Learner
+    if option == "S-Learner":
+
+        # ユーザーが変数を選択
+        features = st.multiselect("特徴量を選択", data.columns)
+        treatment_col = st.selectbox("介入変数を選択", data.columns)
+        outcome_col = st.selectbox("結果変数を選択", data.columns)
+        
+        # モデル選択
+        model_options = {
+            "Linear Regression": LinearRegression(),
+            "Random Forest": RandomForestRegressor(),
+            "Gradient Boosting": GradientBoostingRegressor()
+        }
+        selected_models = st.multiselect("使用するモデルを選択", list(model_options.keys()), default=["Linear Regression"])
+        
+        if features and treatment_col and outcome_col and selected_models:
+            X = data[features]
+            T = data[treatment_col]
+            Y = data[outcome_col]
+        
+            # 欠損値の補完
+            if X.isnull().sum().sum() > 0 or T.isnull().sum() > 0 or Y.isnull().sum() > 0:
+                st.warning("データに欠損値があります。補完方法を選択してください。")
+                
+                # 補完方法の選択
+                impute_strategy = st.selectbox("欠損値補完方法を選択", ["mean", "median", "most_frequent"])
+                
+                if impute_strategy == "mean":
+                    X = X.fillna(X.mean())
+                    T = T.fillna(T.mean())
+                    Y = Y.fillna(Y.mean())
+                elif impute_strategy == "median":
+                    X = X.fillna(X.median())
+                    T = T.fillna(T.median())
+                    Y = Y.fillna(Y.median())
+                elif impute_strategy == "most_frequent":
+                    X = X.fillna(X.mode().iloc[0])
+                    T = T.fillna(T.mode().iloc[0])
+                    Y = Y.fillna(Y.mode().iloc[0])
+
+            # データ分割
+            X_train, X_test, T_train, T_test, Y_train, Y_test = train_test_split(X, T, Y, test_size=0.2, random_state=42)
+            
+            results = {}
+            for model_name in selected_models:
+                st.subheader(f"{model_name} を使用した結果")
+                model = model_options[model_name]
+                s_learner = BaseSLearner(model)
+                s_learner.fit(X_train, T_train, Y_train)
+                
+                # ATEの計算
+                ate = s_learner.estimate_ate(X_test, T_test, Y_test).item()
+                st.metric("ATE", f"{ate:,.3f}", border=True)
+
+    # T-Learner
+    if option == "T-Learner":
+
+        # ユーザーが変数を選択
+        features = st.multiselect("特徴量を選択", data.columns)
+        treatment_col = st.selectbox("介入変数を選択", data.columns)
+        outcome_col = st.selectbox("結果変数を選択", data.columns)
+
+        # モデル選択
+        model_options = {
+            "Linear Regression": LinearRegression(),
+            "Random Forest": RandomForestRegressor(),
+            "Gradient Boosting": GradientBoostingRegressor()
+        }
+        selected_models = st.multiselect("使用するモデルを選択", list(model_options.keys()), default=["Linear Regression"])
+
+        if features and treatment_col and outcome_col and selected_models:
+            X = data[features]
+            T = data[treatment_col]
+            Y = data[outcome_col]
+
+            # 欠損値の補完
+            if X.isnull().sum().sum() > 0 or T.isnull().sum() > 0 or Y.isnull().sum() > 0:
+                st.warning("データに欠損値があります。補完方法を選択してください。")
+                
+                # 補完方法の選択
+                impute_strategy = st.selectbox("欠損値補完方法を選択", ["mean", "median", "most_frequent"])
+                
+                if impute_strategy == "mean":
+                    X = X.fillna(X.mean())
+                    T = T.fillna(T.mean())
+                    Y = Y.fillna(Y.mean())
+                elif impute_strategy == "median":
+                    X = X.fillna(X.median())
+                    T = T.fillna(T.median())
+                    Y = Y.fillna(Y.median())
+                elif impute_strategy == "most_frequent":
+                    X = X.fillna(X.mode().iloc[0])
+                    T = T.fillna(T.mode().iloc[0])
+                    Y = Y.fillna(Y.mode().iloc[0])
+
+            # データ分割
+            X_train, X_test, T_train, T_test, Y_train, Y_test = train_test_split(X, T, Y, test_size=0.2, random_state=42)
+            
+            results = {}
+            for model_name in selected_models:
+                st.subheader(f"{model_name} を使用した結果")
+                model = model_options[model_name]
+                t_learner = BaseTLearner(learner=model)
+                t_learner.fit(X_train, T_train, Y_train)
+                
+                # ATE, CATE, ITE の計算
+                ate_tuple = t_learner.estimate_ate(X_test, T_test, Y_test)
+                ate = ate_tuple[0]
+                ate_value = ate[0] if isinstance(ate, np.ndarray) else ate
+                ite = t_learner.predict(X_test)
+                cate = ite.mean()
+                
+                # ITEを元のデータフレームに追加
+                data_with_ite = data.iloc[X_test.index].copy()  # X_testのインデックスを使って対応する行を取得
+                data_with_ite['ITE'] = ite
+
+                # 結果を表示
+                col1, col2 = st.columns(2)
+                col1.metric("ATE", f"{ate_value:,.3f}", border=True)
+                col2.metric("CATE", f"{cate:,.3f}", border=True)
+                st.write("ITE:", data_with_ite)
+
+    # X-Learner
+    if option == "X-Learner":
+
+        # ユーザーが変数を選択
+        features = st.multiselect("特徴量を選択", data.columns)
+        treatment_col = st.selectbox("介入変数を選択", data.columns)
+        outcome_col = st.selectbox("結果変数を選択", data.columns)
+
+        # モデル選択
+        model_options = {
+            "Linear Regression": LinearRegression(),
+            "Random Forest": RandomForestRegressor(),
+            "Gradient Boosting": GradientBoostingRegressor()
+        }
+        selected_models = st.multiselect("使用するモデルを選択", list(model_options.keys()), default=["Linear Regression"])
+
+        if features and treatment_col and outcome_col and selected_models:
+            X = data[features]
+            T = data[treatment_col]
+            Y = data[outcome_col]
+
+            # 欠損値の補完
+            if X.isnull().sum().sum() > 0 or T.isnull().sum() > 0 or Y.isnull().sum() > 0:
+                st.warning("データに欠損値があります。補完方法を選択してください。")
+
+                # 補完方法の選択
+                impute_strategy = st.selectbox("欠損値補完方法を選択", ["mean", "median", "most_frequent"])
+
+                if impute_strategy == "mean":
+                    X = X.fillna(X.mean())
+                    T = T.fillna(T.mean())
+                    Y = Y.fillna(Y.mean())
+                elif impute_strategy == "median":
+                    X = X.fillna(X.median())
+                    T = T.fillna(T.median())
+                    Y = Y.fillna(Y.median())
+                elif impute_strategy == "most_frequent":
+                    X = X.fillna(X.mode().iloc[0])
+                    T = T.fillna(T.mode().iloc[0])
+                    Y = Y.fillna(Y.mode().iloc[0])
+
+            # データ分割
+            X_train, X_test, T_train, T_test, Y_train, Y_test = train_test_split(X, T, Y, test_size=0.2, random_state=42)
+
+            results = {}
+            for model_name in selected_models:
+                st.subheader(f"{model_name} を使用した結果")
+                model = model_options[model_name]
+                x_learner = BaseXLearner(learner=model)
+                x_learner.fit(X_train, T_train, Y_train)
+
+                # ATE, CATE, ITE の計算
+                ate_tuple = x_learner.estimate_ate(X_test, T_test, Y_test)
+                ate = ate_tuple[0]
+                ate_value = ate[0] if isinstance(ate, np.ndarray) else ate
+                ite = x_learner.predict(X_test)
+                cate = ite.mean()
+
+                # ITEを元のデータフレームに追加
+                data_with_ite = data.iloc[X_test.index].copy()  # X_testのインデックスを使って対応する行を取得
+                data_with_ite['ITE'] = ite
+
+                # 結果を表示
+                col1, col2 = st.columns(2)
+                col1.metric("ATE", f"{ate_value:,.3f}", border=True)
+                col2.metric("CATE", f"{cate:,.3f}", border=True)
+                st.write("ITE:", data_with_ite)
+
+    # R-Learner
+    if option == "R-Learner":
+
+        # ユーザーが変数を選択
+        features = st.multiselect("特徴量を選択", data.columns)
+        treatment_col = st.selectbox("介入変数を選択", data.columns)
+        outcome_col = st.selectbox("結果変数を選択", data.columns)
+
+        # モデル選択
+        model_options = {
+            "Linear Regression": LinearRegression(),
+            "Random Forest": RandomForestRegressor(),
+            "Gradient Boosting": GradientBoostingRegressor()
+        }
+        selected_models = st.multiselect("使用するモデルを選択", list(model_options.keys()), default=["Linear Regression"])
+
+        if features and treatment_col and outcome_col and selected_models:
+            X = data[features]
+            T = data[treatment_col]
+            Y = data[outcome_col]
+
+            # 欠損値の補完
+            if X.isnull().sum().sum() > 0 or T.isnull().sum() > 0 or Y.isnull().sum() > 0:
+                st.warning("データに欠損値があります。補完方法を選択してください。")
+
+                # 補完方法の選択
+                impute_strategy = st.selectbox("欠損値補完方法を選択", ["mean", "median", "most_frequent"])
+
+                if impute_strategy == "mean":
+                    X = X.fillna(X.mean())
+                    T = T = T.fillna(T.mean())
+                    Y = Y.fillna(Y.mean())
+                elif impute_strategy == "median":
+                    X = X.fillna(X.median())
+                    T = T.fillna(T.median())
+                    Y = Y.fillna(Y.median())
+                elif impute_strategy == "most_frequent":
+                    X = X.fillna(X.mode().iloc[0])
+                    T = T.fillna(T.mode().iloc[0])
+                    Y = Y.fillna(Y.mode().iloc[0])
+
+            # データ分割
+            X_train, X_test, T_train, T_test, Y_train, Y_test = train_test_split(X, T, Y, test_size=0.2, random_state=42)
+
+            results = {}
+            for model_name in selected_models:
+                st.subheader(f"{model_name} を使用した結果")
+                model = model_options[model_name]
+                r_learner = BaseRLearner(learner=model)
+                r_learner.fit(X_train, T_train, Y_train)
+
+                # ATE, CATE, ITE の計算
+                ate_tuple = r_learner.estimate_ate(X_test, T_test, Y_test)
+                ate = ate_tuple[0]
+                ate_value = ate[0] if isinstance(ate, np.ndarray) else ate
+                ite = r_learner.predict(X_test)
+                cate = ite.mean()
+
+                # ITEを元のデータフレームに追加
+                data_with_ite = data.iloc[X_test.index].copy()  # X_testのインデックスを使って対応する行を取得
+                data_with_ite['ITE'] = ite
+
+                # 結果を表示
+                col1, col2 = st.columns(2)
+                col1.metric("ATE", f"{ate_value:,.3f}", border=True)
+                col2.metric("CATE", f"{cate:,.3f}", border=True)
+                st.write("ITE:", data_with_ite)
