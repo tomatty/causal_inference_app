@@ -514,103 +514,6 @@ if st.session_state.propensity_clicked:
             st.pyplot(fig)
 
 
-# DID
-if 'did_clicked' not in st.session_state:
-    st.session_state.did_clicked = False
-
-if st.sidebar.button('DID'):
-    st.session_state.did_clicked = not st.session_state.did_clicked
-
-if st.session_state.did_clicked:
-    st.markdown('---')
-    st.write(f"### DID")
-
-    # グループ集計を表示
-    if st.checkbox("グループ集計を表示"):
-        # ユーザーに選択させる
-        selected_groupby = st.multiselect("グループを選択してください", data.columns)
-        selected_agg = st.selectbox("集計キーを選択してください", data.columns)
-
-        # グループ化と集計
-        if selected_groupby:
-            grouped_data = data.groupby(selected_groupby)[selected_agg].mean().reset_index()
-            st.write(grouped_data)
-        else:
-            st.write("カラムを選択してください")
-    
-    # プレトレンドテスト
-    if st.checkbox("プレトレンドテスト"):
-            fig, ax = plt.subplots()
-            sns.lineplot(data=grouped_data, x=selected_groupby[0], y=selected_agg, 
-                         hue=selected_groupby[1] if len(selected_groupby) > 1 else None, ax=ax)
-            st.pyplot(fig)
-    
-    # 回帰分析の実行
-    option = st.radio("クラスターの有無を選択してください", ("クラスターなし", "クラスターあり"))
-
-    if option == "クラスターなし":
-        formula = st.text_input("回帰式を入力してください", key='formula004')
-        if formula:
-            try:
-                result = smf.ols(formula, data=data).fit()
-                st.write("回帰分析の結果")
-                st.text(result.summary())
-            except Exception as e:
-                st.error(f"エラー: {e}")
-    
-    if option == "クラスターあり":
-        # クラスターを選択
-        cluster_col = st.selectbox("クラスターを選択してください", data.columns)
-        formula = st.text_input("回帰式を入力してください", key='formula004')
-        if formula:
-            try:
-                result = smf.ols(formula, data=data).fit()
-                st.write("回帰分析の結果")
-                # クラスター頑健標準誤差を計算
-                result_corrected = result.get_robustcov_results("cluster", groups=data[cluster_col])
-                st.text(result_corrected.summary())
-            except Exception as e:
-                st.error(f"エラー: {e}")
-
-
-# Causal Impact
-if 'causal_impact_clicked' not in st.session_state:
-    st.session_state.causal_impact_clicked = False
-
-if st.sidebar.button('Causal Impact'):
-    st.session_state.causal_impact_clicked = not st.session_state.causal_impact_clicked
-
-if st.session_state.causal_impact_clicked:
-    st.markdown('---')
-    st.write(f"### Causal Impact")
-    #st.info("作成中のため使用できません。リリースまでしばらくお待ちください。", icon=None)
-    #st.error("ModuleNotFoundError: No module named 'tf_keras'", icon=None)
-
-    # 期間情報を入力させる
-    col1, col2 = st.columns(2)
-    with col1:
-        pre_start = st.number_input('施策前の開始日', min_value=1, value=1)
-    with col2:
-        pre_end = st.number_input('施策前の終了日', min_value=pre_start, value=90)
-
-    col1, col2 = st.columns(2)
-    with col1:
-        post_start = st.number_input('施策後の開始日', min_value=pre_end+1, value=91)
-    with col2:
-        post_end = st.number_input('施策後の終了日', min_value=post_start, value=119)
-
-    # CausalImpactの学習・推定
-    if st.button('Causal Impact 実行'):
-        ci = CausalImpact(data, [pre_start, pre_end], [post_start, post_end])
-
-        # 結果の可視化
-        st.write('Causal Impact 結果:')
-        st.pyplot(ci.plot())
-
-        #推定結果の要点を出力
-        st.write(ci.summary())
-
-
 # Sharp RDD
 if 'sharp_rdd_clicked' not in st.session_state:
     st.session_state.sharp_rdd_clicked = False
@@ -722,6 +625,104 @@ if st.session_state.fuzzy_rdd_clicked:
         result_fuzzy_rdd = rdrobust(y=data[y_col], x=data[x_col], fuzzy=data[fuzzy_col], c=c_value, all=True)
         #st.write(result_fuzzy_rdd)
         st.write(result_fuzzy_rdd.__dict__)
+
+
+# DID
+if 'did_clicked' not in st.session_state:
+    st.session_state.did_clicked = False
+
+if st.sidebar.button('DID'):
+    st.session_state.did_clicked = not st.session_state.did_clicked
+
+if st.session_state.did_clicked:
+    st.markdown('---')
+    st.write(f"### DID")
+
+    # グループ集計を表示
+    if st.checkbox("グループ集計を表示"):
+        # ユーザーに選択させる
+        selected_groupby = st.multiselect("グループを選択してください", data.columns)
+        selected_agg = st.selectbox("集計キーを選択してください", data.columns)
+
+        # グループ化と集計
+        if selected_groupby:
+            grouped_data = data.groupby(selected_groupby)[selected_agg].mean().reset_index()
+            st.write(grouped_data)
+        else:
+            st.write("カラムを選択してください")
+    
+    # プレトレンドテスト
+    if st.checkbox("プレトレンドテスト"):
+            fig, ax = plt.subplots()
+            sns.lineplot(data=grouped_data, x=selected_groupby[0], y=selected_agg, 
+                         hue=selected_groupby[1] if len(selected_groupby) > 1 else None, ax=ax)
+            st.pyplot(fig)
+    
+    # 回帰分析の実行
+    option = st.radio("クラスターの有無を選択してください", ("クラスターなし", "クラスターあり"))
+
+    if option == "クラスターなし":
+        formula = st.text_input("回帰式を入力してください", key='formula004')
+        if formula:
+            try:
+                result = smf.ols(formula, data=data).fit()
+                st.write("回帰分析の結果")
+                st.text(result.summary())
+            except Exception as e:
+                st.error(f"エラー: {e}")
+    
+    if option == "クラスターあり":
+        # クラスターを選択
+        cluster_col = st.selectbox("クラスターを選択してください", data.columns)
+        formula = st.text_input("回帰式を入力してください", key='formula004')
+        if formula:
+            try:
+                result = smf.ols(formula, data=data).fit()
+                st.write("回帰分析の結果")
+                # クラスター頑健標準誤差を計算
+                result_corrected = result.get_robustcov_results("cluster", groups=data[cluster_col])
+                st.text(result_corrected.summary())
+            except Exception as e:
+                st.error(f"エラー: {e}")
+
+
+# Causal Impact
+if 'causal_impact_clicked' not in st.session_state:
+    st.session_state.causal_impact_clicked = False
+
+if st.sidebar.button('Causal Impact'):
+    st.session_state.causal_impact_clicked = not st.session_state.causal_impact_clicked
+
+if st.session_state.causal_impact_clicked:
+    st.markdown('---')
+    st.write(f"### Causal Impact")
+    #st.info("作成中のため使用できません。リリースまでしばらくお待ちください。", icon=None)
+    #st.error("ModuleNotFoundError: No module named 'tf_keras'", icon=None)
+
+    # 期間情報を入力させる
+    col1, col2 = st.columns(2)
+    with col1:
+        pre_start = st.number_input('施策前の開始日', min_value=1, value=1)
+    with col2:
+        pre_end = st.number_input('施策前の終了日', min_value=pre_start, value=90)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        post_start = st.number_input('施策後の開始日', min_value=pre_end+1, value=91)
+    with col2:
+        post_end = st.number_input('施策後の終了日', min_value=post_start, value=119)
+
+    # CausalImpactの学習・推定
+    if st.button('Causal Impact 実行'):
+        ci = CausalImpact(data, [pre_start, pre_end], [post_start, post_end])
+
+        # 結果の可視化
+        st.write('Causal Impact 結果:')
+        st.pyplot(ci.plot())
+
+        #推定結果の要点を出力
+        st.write(ci.summary())
+
 
 
 # メタラーナ
