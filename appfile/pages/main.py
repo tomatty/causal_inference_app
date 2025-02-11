@@ -996,3 +996,43 @@ if st.session_state.metalearner_clicked:
                 col1.metric("ATE", f"{ate_value:,.3f}", border=True)
                 col2.metric("CATE", f"{cate:,.3f}", border=True)
                 st.write("ITE:", data_with_ite)
+
+
+st.sidebar.markdown('---')
+st.sidebar.markdown('### 感度分析')
+
+
+# E-Value
+if 'evalue_clicked' not in st.session_state:
+    st.session_state.evalue_clicked = False
+
+if st.sidebar.button('E-Value'):
+    st.session_state.evalue_clicked = not st.session_state.evalue_clicked
+
+if st.session_state.evalue_clicked:
+    st.markdown('---')
+    st.write(f"### E-Value")
+
+    # ユーザー入力
+    treatment = st.selectbox('トリートメント変数', data.columns)
+    outcome = st.selectbox('結果変数', data.columns)
+
+    # 相対リスク(RR)を計算
+    treatment_mean = data[data[treatment] == 1][outcome].mean()
+    control_mean = data[data[treatment] == 0][outcome].mean()
+    rr_treatment_effect = treatment_mean / control_mean
+
+    # E-Valueを計算
+    if rr_treatment_effect >= 1:
+        e_value = rr_treatment_effect + np.sqrt(rr_treatment_effect * (rr_treatment_effect - 1))
+    
+    else:
+        e_value = 1/rr_treatment_effect + np.sqrt(1/rr_treatment_effect * (1/rr_treatment_effect - 1))
+
+    # 結果を表示
+    col1, col2 = st.columns(2)
+    col1.metric("相対リスク(RR)", f"{rr_treatment_effect:,.3f}", border=True)
+    col2.metric("E-Value", f"{e_value:,.3f}", border=True)
+
+    # 解釈
+    st.info("E-Valueが大きいほど、観測された結果変数と処置変数の関係は因果関係に近く、E-Valueが小さいほど因果関係から遠い")
