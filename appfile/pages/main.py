@@ -302,10 +302,10 @@ if st.session_state.normal_abtest_clicked:
             response_col = st.selectbox("結果変数を選択", data.columns)
         
         # トリートメント群ごとに集計
-        df_result = data.groupby(treatment_col)[response_col].mean() * 100
+        df_result = data.groupby(treatment_col)[response_col].mean()
         
         # 結果表示
-        st.write("データフレーム")
+        st.write("集計結果:")
         st.write(df_result)
         
         # ATEの計算とweltchのt検定
@@ -313,12 +313,12 @@ if st.session_state.normal_abtest_clicked:
         df_control = data[data[treatment_col] == 0][response_col]
         ate = df_result[1] - df_result[0]
         t_stat, p_value = stats.ttest_ind(df_treatment, df_control)
+
         st.write("ATEの計算とweltchのt検定の結果")
         col1, col2, col3 = st.columns(3)
         col1.metric("ATE", f"{ate:,.3f}", border=True)
         col2.metric("T_statistic", f"{t_stat:,.5f}", border=True)
         col3.metric("P_value", f"{p_value:,.5f}", border=True)
-        #st.write(f"#### ATE: {ate:.5f}, t_statistic: {t_stat:.5f}, p_value: {p_value:.5f}")
 
     # 回帰分析の場合
     if option == "回帰分析":
@@ -1025,7 +1025,7 @@ if st.session_state.evalue_clicked:
     # E-Valueを計算
     if rr_treatment_effect >= 1:
         e_value = rr_treatment_effect + np.sqrt(rr_treatment_effect * (rr_treatment_effect - 1))
-    
+
     else:
         e_value = 1/rr_treatment_effect + np.sqrt(1/rr_treatment_effect * (1/rr_treatment_effect - 1))
 
