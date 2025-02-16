@@ -70,7 +70,7 @@ DATASETS = {
 # `key` を明示的に初期化
 #if "data_selection_method" not in st.session_state:
 #    st.session_state["data_selection_method"] = "サンプルデータを選択"  # デフォルト値を設定
-option = st.radio("データの取得方法を選択してください", ("サンプルデータを選択", "ファイルをアップロード"), key="data_selection_method")
+option = st.radio("データの取得方法を選択してください", ("サンプルデータを選択", "サンプルデータを生成", "ファイルをアップロード"), key="data_selection_method")
 
 # 空データを用意
 data = None
@@ -90,26 +90,142 @@ if option == "サンプルデータを選択":
     
     data = load_data(selected_url)
 
+    if data is not None:
+        if st.checkbox("データフレームを表示"):
+            st.dataframe(data)
+        if st.checkbox("データフレームの統計情報を表示"):
+            st.write(data.describe())
+        if st.checkbox("相関行列を表示"):
+            corr_matrix = data.corr()
+            fig_corr, ax = plt.subplots(figsize=(10, 6))
+            sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
+            st.pyplot(fig_corr)
+        if st.checkbox("欠損値の有無を表示"):
+            missing_number = data.isnull().sum()
+            st.write(missing_number)
+
+# サンプルデータを生成
+elif option == "サンプルデータを生成":
+
+    # データ生成関数
+    def generate_data(rows, cols, col_names, col_types, col_params, apply_bias, bias_col, bias_value):
+        data = {}
+        for i in range(cols):
+            col_name = col_names[i]
+            col_type = col_types[i]
+            params = col_params[i]
+            if col_type == "整数":
+                data[col_name] = np.random.randint(params[0], params[1], rows)
+            elif col_type == "浮動小数":
+                data[col_name] = np.random.uniform(params[0], params[1], rows)
+            elif col_type == "正規分布":
+                data[col_name] = np.random.normal(params[0], params[1], rows)
+            elif col_type == "バイナリ":
+                data[col_name] = np.random.choice([0, 1], rows, p=[1 - params[0], params[0]])
+            elif col_type == "カテゴリ":
+                categories = ["A", "B", "C", "D"]
+                data[col_name] = np.random.choice(categories, rows)
+        
+        data = pd.DataFrame(data)
+        
+        # バイアス適用
+        if apply_bias and bias_col in data.columns and bias_target_col in data.columns:
+            data.loc[data[bias_col] == 1, bias_target_col] += bias_value
+        
+        return data
+
+    # ユーザー入力
+    rows = st.number_input("サンプルサイズ", min_value=10, max_value=10000, value=300, step=10)
+    cols = st.number_input("カラム数", min_value=1, max_value=20, value=2, step=1)
+
+    # オプションで加算バイアスを適用
+    apply_bias = st.checkbox("加算バイアスを適用する")
+    bias_col = st.text_input("バイアスの基準となるカラム名", value="") if apply_bias else ""
+    bias_target_col = st.text_input("バイアスを適用するカラム名", value="") if apply_bias else ""
+    bias_value = st.number_input("バイアス値", value=10, step=1) if apply_bias else 0
+
+    # 列ごとの設定
+    col_names = []
+    col_types = []
+    col_params = []
+    for i in range(cols):
+        col_name = st.text_input(f"列 {i+1} の名前", value=f"col_{i+1}")
+        col_names.append(col_name)
+        col_type = st.selectbox(f"列 {i+1} のデータ型", ["整数", "浮動小数", "正規分布", "バイナリ", "カテゴリ"], index=0)
+        col_types.append(col_type)
+        
+        if col_type in ["整数", "浮動小数"]:
+            min_val = st.number_input(f"{col_name} の最小値", value=0, step=1)
+            max_val = st.number_input(f"{col_name} の最大値", value=100, step=1)
+            col_params.append((min_val, max_val))
+        elif col_type == "正規分布":
+            mean = st.number_input(f"{col_name} の平均", value=50, step=1)
+            std = st.number_input(f"{col_name} の標準偏差", value=15, step=1, min_value=1)
+            col_params.append((mean, std))
+        elif col_type == "バイナリ":
+            prob = st.number_input(f"{col_name} の1が出る確率", value=0.5, min_value=0.0, max_value=1.0, step=0.01)
+            col_params.append((prob,))
+        else:
+            col_params.append((None, None))
+
+    # データ生成
+    if "data" not in st.session_state:
+        st.session_state["data"] = None
+
+    if st.button("データ生成"):
+        data = generate_data(rows, cols, col_names, col_types, col_params, apply_bias, bias_col, bias_value)
+        
+        if data is not None:  # データが正しく生成された場合のみ保存
+            st.session_state["data"] = data
+            st.success("データが生成されました。")
+        
+        # CSVダウンロード
+        csv_buffer = io.StringIO()
+        data.to_csv(csv_buffer, index=False)
+        csv_buffer.seek(0)
+        st.download_button(
+            label="ダウンロード",
+            data=csv_buffer.getvalue(),
+            file_name="sample_data.csv",
+            mime="text/csv"
+        )
+
+    # データセットが空でない場合
+    if "data" in st.session_state and st.session_state["data"] is not None:
+        data = st.session_state["data"]
+
+        if st.checkbox("データフレームを表示"):
+            st.dataframe(data)
+        if st.checkbox("データフレームの統計情報を表示"):
+            st.write(data.describe())
+        if st.checkbox("相関行列を表示"):
+            corr_matrix = data.corr()
+            fig_corr, ax = plt.subplots(figsize=(10, 6))
+            sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
+            st.pyplot(fig_corr)
+        if st.checkbox("欠損値の有無を表示"):
+            missing_number = data.isnull().sum()
+            st.write(missing_number)
+
 # ファイルアップロードを選択した場合
 elif option == "ファイルをアップロード":
     uploaded_file = st.file_uploader("CSVファイルをアップロードしてください", type=["csv"])
     if uploaded_file is not None:
         data = pd.read_csv(uploaded_file)
 
-# データセットが空でない場合
-if data is not None:
-    if st.checkbox("データフレームを表示"):
-        st.dataframe(data)
-    if st.checkbox("データフレームの統計情報を表示"):
-        st.write(data.describe())
-    if st.checkbox("相関行列を表示"):
-        corr_matrix = data.corr()
-        fig_corr, ax = plt.subplots(figsize=(10, 6))
-        sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
-        st.pyplot(fig_corr)
-    if st.checkbox("欠損値の有無を表示"):
-        missing_number = data.isnull().sum()
-        st.write(missing_number)
+    if data is not None:
+        if st.checkbox("データフレームを表示"):
+            st.dataframe(data)
+        if st.checkbox("データフレームの統計情報を表示"):
+            st.write(data.describe())
+        if st.checkbox("相関行列を表示"):
+            corr_matrix = data.corr()
+            fig_corr, ax = plt.subplots(figsize=(10, 6))
+            sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
+            st.pyplot(fig_corr)
+        if st.checkbox("欠損値の有無を表示"):
+            missing_number = data.isnull().sum()
+            st.write(missing_number)
 
 
 st.sidebar.markdown('---')
