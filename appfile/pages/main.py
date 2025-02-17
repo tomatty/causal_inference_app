@@ -138,12 +138,6 @@ elif option == "サンプルデータを生成":
     rows = st.number_input("サンプルサイズ", min_value=10, max_value=10000, value=300, step=10)
     cols = st.number_input("カラム数", min_value=1, max_value=20, value=2, step=1)
 
-    # オプションで加算バイアスを適用
-    apply_bias = st.checkbox("加算バイアスを適用する")
-    bias_col = st.text_input("バイアスの基準となるカラム名", value="") if apply_bias else ""
-    bias_target_col = st.text_input("バイアスを適用するカラム名", value="") if apply_bias else ""
-    bias_value = st.number_input("バイアス値", value=10, step=1) if apply_bias else 0
-
     # 列ごとの設定
     col_names = []
     col_types = []
@@ -167,6 +161,12 @@ elif option == "サンプルデータを生成":
             col_params.append((prob,))
         else:
             col_params.append((None, None))
+
+    # オプションで加算バイアスを適用
+    apply_bias = st.checkbox("加算バイアスを適用する")
+    bias_col = st.text_input("バイアスの基準となるカラム名", value="") if apply_bias else ""
+    bias_target_col = st.text_input("バイアスを適用するカラム名", value="") if apply_bias else ""
+    bias_value = st.number_input("バイアス値", value=10, step=1) if apply_bias else 0
 
     # データ生成
     if "data" not in st.session_state:
