@@ -5,11 +5,10 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib_fontja as mf
-# 日本語フォントを適用
-mf.set_font()
-# フォントキャッシュをクリア
-import matplotlib
-matplotlib.rcParams["font.family"] = "IPAexGothic"
+import matplotlib.font_manager as fm
+# IPAexフォントを手動で設定
+font_path = "/usr/share/fonts/opentype/ipafont-mincho/ipam.ttf"  # 例: IPAフォントのパス
+prop = fm.FontProperties(fname=font_path)
 
 from scipy import stats
 import statsmodels.formula.api as smf
@@ -463,7 +462,7 @@ if st.session_state.normal_abtest_clicked:
 
         # 軸ラベル
         ax.set_ylabel(response_col)
-        ax.set_title("トリートメント群とコントロール群の比較")
+        ax.set_title("トリートメント群とコントロール群の比較", fontproperties=prop)
 
         # Streamlitに表示
         st.pyplot(fig)
