@@ -4,7 +4,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import matplotlib_fontja
+import matplotlib_fontja as mf
+# 日本語フォントを適用
+mf.set_font()
+# フォントキャッシュをクリア
+import matplotlib
+matplotlib.rcParams["font.family"] = "IPAexGothic"
 
 from scipy import stats
 import statsmodels.formula.api as smf
