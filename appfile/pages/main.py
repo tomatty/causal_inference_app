@@ -42,6 +42,7 @@ st.set_page_config(
 
 st.sidebar.markdown('# 効果検証分析ツール')
 
+
 #リフレッシュボタンの実装
 def reset_session_state():
     st.session_state.clear()  # 全キーを安全に削除
@@ -91,19 +92,37 @@ if option == "サンプルデータを選択":
     
     data = load_data(selected_url)
 
+    #EDA
     if data is not None:
-        if st.checkbox("データフレームを表示"):
+        option = st.selectbox(
+            "表示するデータを選択してください",
+            ["データフレーム",
+             "統計情報",
+             "データ型の確認",
+             "欠損値の確認",
+             "相関行列"
+            ]
+        )
+
+        if option == "データフレーム":
             st.dataframe(data)
-        if st.checkbox("データフレームの統計情報を表示"):
+        
+        elif option == "統計情報":
             st.write(data.describe())
-        if st.checkbox("相関行列を表示"):
+        
+        elif option == "データ型の確認":
+            df_types = pd.DataFrame({'Column': data.columns, 'DataType': data.dtypes.values})
+            st.write(df_types)
+
+        elif option == "欠損値の確認":
+            missing_number = data.isnull().sum()
+            st.write(missing_number)
+        
+        elif option == "相関行列":
             corr_matrix = data.corr()
             fig_corr, ax = plt.subplots(figsize=(10, 6))
             sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
             st.pyplot(fig_corr)
-        if st.checkbox("欠損値の有無を表示"):
-            missing_number = data.isnull().sum()
-            st.write(missing_number)
 
 # サンプルデータを生成
 elif option == "サンプルデータを生成":
@@ -195,18 +214,35 @@ elif option == "サンプルデータを生成":
     if "data" in st.session_state and st.session_state["data"] is not None:
         data = st.session_state["data"]
 
-        if st.checkbox("データフレームを表示"):
+        option = st.selectbox(
+            "表示するデータを選択してください",
+            ["データフレーム",
+             "統計情報",
+             "データ型の確認",
+             "欠損値の確認",
+             "相関行列"
+            ]
+        )
+
+        if option == "データフレーム":
             st.dataframe(data)
-        if st.checkbox("データフレームの統計情報を表示"):
+        
+        elif option == "統計情報":
             st.write(data.describe())
-        if st.checkbox("相関行列を表示"):
+        
+        elif option == "データ型の確認":
+            df_types = pd.DataFrame({'Column': data.columns, 'DataType': data.dtypes.values})
+            st.write(df_types)
+
+        elif option == "欠損値の確認":
+            missing_number = data.isnull().sum()
+            st.write(missing_number)
+        
+        elif option == "相関行列":
             corr_matrix = data.corr()
             fig_corr, ax = plt.subplots(figsize=(10, 6))
             sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
             st.pyplot(fig_corr)
-        if st.checkbox("欠損値の有無を表示"):
-            missing_number = data.isnull().sum()
-            st.write(missing_number)
 
 # ファイルアップロードを選択した場合
 elif option == "ファイルをアップロード":
@@ -215,18 +251,35 @@ elif option == "ファイルをアップロード":
         data = pd.read_csv(uploaded_file)
 
     if data is not None:
-        if st.checkbox("データフレームを表示"):
+        option = st.selectbox(
+            "表示するデータを選択してください",
+            ["データフレーム",
+             "統計情報",
+             "データ型の確認",
+             "欠損値の確認",
+             "相関行列"
+            ]
+        )
+
+        if option == "データフレーム":
             st.dataframe(data)
-        if st.checkbox("データフレームの統計情報を表示"):
+        
+        elif option == "統計情報":
             st.write(data.describe())
-        if st.checkbox("相関行列を表示"):
+        
+        elif option == "データ型の確認":
+            df_types = pd.DataFrame({'Column': data.columns, 'DataType': data.dtypes.values})
+            st.write(df_types)
+
+        elif option == "欠損値の確認":
+            missing_number = data.isnull().sum()
+            st.write(missing_number)
+        
+        elif option == "相関行列":
             corr_matrix = data.corr()
             fig_corr, ax = plt.subplots(figsize=(10, 6))
             sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
             st.pyplot(fig_corr)
-        if st.checkbox("欠損値の有無を表示"):
-            missing_number = data.isnull().sum()
-            st.write(missing_number)
 
 
 st.sidebar.markdown('---')
