@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib_fontja
 
 from scipy import stats
 import statsmodels.formula.api as smf
@@ -430,11 +431,37 @@ if st.session_state.normal_abtest_clicked:
         ate = df_result[1] - df_result[0]
         t_stat, p_value = stats.ttest_ind(df_treatment, df_control)
 
-        st.write("ATEの計算とweltchのt検定の結果")
+        st.write("ATEの計算とweltchのt検定の結果:")
         col1, col2, col3 = st.columns(3)
         col1.metric("ATE", f"{ate:,.3f}", border=True)
         col2.metric("T_statistic", f"{t_stat:,.5f}", border=True)
         col3.metric("P_value", f"{p_value:,.5f}", border=True)
+
+        # グラフの描画
+        st.write("グラフ:")
+        fig, ax = plt.subplots()
+
+        # 棒グラフの描画
+        groups = ["Control Group(0)", "Treatment Group(1)"]
+        values = [df_result[0], df_result[1]]
+        ax.bar(groups, values, color=["blue", "red"], alpha=0.7)
+
+        # ATEの補助線を追加
+        ax.plot([0, 1], [df_result[0], df_result[0]], "k--", alpha=0.5)  # Controlの基準線
+        ax.plot([1, 1], [df_result[0], df_result[1]], "k-", lw=2)  # ATEの差を示す線
+
+        # ATEを矢印で可視化
+        ax.annotate(f"ATE: {ate:.3f}", xy=(1, df_result[0] + ate / 2),
+                    xytext=(1.1, df_result[0] + ate / 2),
+                    arrowprops=dict(arrowstyle="->", lw=1.5),
+                    fontsize=12, color="black")
+
+        # 軸ラベル
+        ax.set_ylabel(response_col)
+        ax.set_title("トリートメント群とコントロール群の比較")
+
+        # Streamlitに表示
+        st.pyplot(fig)
 
     # 回帰分析の場合
     if option == "回帰分析":

@@ -4,6 +4,7 @@ pandas
 plotly
 matplotlib
 seaborn
+matplotlib-fontja
 
 statsmodels
 scipy
