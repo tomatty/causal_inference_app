@@ -39,6 +39,15 @@ st.set_page_config(
     page_icon = ":computer:"
 )
 
+# タイトルの設定
+st.title("データ分析ポートフォリオ")
+
+st.info("この分析ツールはポートフォリオの一部として作成したものです。実務での使用には十分にご注意ください。")
+st.markdown("""
+<div style="text-align: right;">
+    リリース日:2025.2.20 &nbsp;&nbsp;&nbsp;&nbsp; 作成者:戸松 拓也
+</div>
+""", unsafe_allow_html=True)
 
 st.sidebar.markdown('# 効果検証分析ツール')
 
@@ -52,234 +61,243 @@ if st.sidebar.button('リフレッシュ'):
     st.rerun() # st.experimental_rerun()は使えない
 
 
-st.write(f"### データセットの準備")
-# データセットのURLリスト
-DATASETS = {
-    "CH2 Log Data": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch2_logdata.csv",
-    "Lenta Dataset": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/lenta_dataset.csv",
-    "Cluster Trial": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch3_cluster_trial.csv",
-    "Stratified Trial": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch3_stratified_trial.csv",
-    "AA Test": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch3_aatest_trial.csv",
-    "Noncompliance AB Test": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch3_noncompliance_abtest.csv",
-    "Organ Donations (Short)": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch4_organ_donations_short.csv",
-    "Organ Donations (Full)": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch4_organ_donations_full.csv",
-    "Coupon Data": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch5_coupon.csv",
-    "Coupon Data v2": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch5_coupon_v2.csv",
-    "Time Series Sample Data": "https://raw.githubusercontent.com/tomatty/dataset/refs/heads/main/timeseries_data.csv"
-}
+# データセットの準備
+if 'preparation_clicked' not in st.session_state:
+    st.session_state.preparation_clicked = False
 
-# ユーザーがデータの取得方法を選択
-# `key` を明示的に初期化
-#if "data_selection_method" not in st.session_state:
-#    st.session_state["data_selection_method"] = "サンプルデータを選択"  # デフォルト値を設定
-option = st.radio("データの取得方法を選択してください", ("サンプルデータを選択", "サンプルデータを生成", "ファイルをアップロード"), key="data_selection_method")
+if st.button('データセットの準備を開始'):
+    st.session_state.preparation_clicked = not st.session_state.preparation_clicked
 
-# 空データを用意
-data = None
+if st.session_state.preparation_clicked:
+    st.markdown('---')
+    st.write(f"### データセットの準備")
+    # データセットのURLリスト
+    DATASETS = {
+        "CH2 Log Data": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch2_logdata.csv",
+        "Lenta Dataset": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/lenta_dataset.csv",
+        "Cluster Trial": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch3_cluster_trial.csv",
+        "Stratified Trial": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch3_stratified_trial.csv",
+        "AA Test": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch3_aatest_trial.csv",
+        "Noncompliance AB Test": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch3_noncompliance_abtest.csv",
+        "Organ Donations (Short)": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch4_organ_donations_short.csv",
+        "Organ Donations (Full)": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch4_organ_donations_full.csv",
+        "Coupon Data": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch5_coupon.csv",
+        "Coupon Data v2": "https://raw.githubusercontent.com/HirotakeIto/intro_to_impact_evaluation_with_python/main/data/ch5_coupon_v2.csv",
+        "Time Series Sample Data": "https://raw.githubusercontent.com/tomatty/dataset/refs/heads/main/timeseries_data.csv"
+    }
 
-# サンプルデータを選択した場合
-if option == "サンプルデータを選択":
-    # ユーザーが選択するセレクトボックス
-    selected_dataset = st.selectbox("サンプルデータを選択してください", list(DATASETS.keys()))
-    
-    # 選択されたURL
-    selected_url = DATASETS[selected_dataset]
-    
-    # データの読み込みと表示
-    @st.cache_data
-    def load_data(url):
-        return pd.read_csv(url)
-    
-    data = load_data(selected_url)
+    # ユーザーがデータの取得方法を選択
+    # `key` を明示的に初期化
+    #if "data_selection_method" not in st.session_state:
+    #    st.session_state["data_selection_method"] = "サンプルデータを選択"  # デフォルト値を設定
+    option = st.radio("データの取得方法を選択してください", ("サンプルデータを選択", "サンプルデータを生成", "ファイルをアップロード"), key="data_selection_method")
 
-    #EDA
-    if data is not None:
-        option = st.selectbox(
-            "表示するデータを選択してください",
-            ["データフレーム",
-             "統計情報",
-             "データ型の確認",
-             "欠損値の確認",
-             "相関行列"
-            ]
-        )
+    # 空データを用意
+    data = None
 
-        if option == "データフレーム":
-            st.dataframe(data)
+    # サンプルデータを選択した場合
+    if option == "サンプルデータを選択":
+        # ユーザーが選択するセレクトボックス
+        selected_dataset = st.selectbox("サンプルデータを選択してください", list(DATASETS.keys()))
         
-        elif option == "統計情報":
-            st.write(data.describe())
+        # 選択されたURL
+        selected_url = DATASETS[selected_dataset]
         
-        elif option == "データ型の確認":
-            df_types = pd.DataFrame({'Column': data.columns, 'DataType': data.dtypes.values})
-            st.write(df_types)
-
-        elif option == "欠損値の確認":
-            missing_number = data.isnull().sum()
-            st.write(missing_number)
+        # データの読み込みと表示
+        @st.cache_data
+        def load_data(url):
+            return pd.read_csv(url)
         
-        elif option == "相関行列":
-            corr_matrix = data.corr()
-            fig_corr, ax = plt.subplots(figsize=(10, 6))
-            sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
-            st.pyplot(fig_corr)
+        data = load_data(selected_url)
 
-# サンプルデータを生成
-elif option == "サンプルデータを生成":
+        #EDA
+        if data is not None:
+            option = st.selectbox(
+                "表示するデータを選択してください",
+                ["データフレーム",
+                "統計情報",
+                "データ型の確認",
+                "欠損値の確認",
+                "相関行列"
+                ]
+            )
 
-    # データ生成関数
-    def generate_data(rows, cols, col_names, col_types, col_params, apply_bias, bias_col, bias_value):
-        data = {}
+            if option == "データフレーム":
+                st.dataframe(data)
+            
+            elif option == "統計情報":
+                st.write(data.describe())
+            
+            elif option == "データ型の確認":
+                df_types = pd.DataFrame({'Column': data.columns, 'DataType': data.dtypes.values})
+                st.write(df_types)
+
+            elif option == "欠損値の確認":
+                missing_number = data.isnull().sum()
+                st.write(missing_number)
+            
+            elif option == "相関行列":
+                corr_matrix = data.corr()
+                fig_corr, ax = plt.subplots(figsize=(10, 6))
+                sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
+                st.pyplot(fig_corr)
+
+    # サンプルデータを生成
+    elif option == "サンプルデータを生成":
+
+        # データ生成関数
+        def generate_data(rows, cols, col_names, col_types, col_params, apply_bias, bias_col, bias_value):
+            data = {}
+            for i in range(cols):
+                col_name = col_names[i]
+                col_type = col_types[i]
+                params = col_params[i]
+                if col_type == "整数":
+                    data[col_name] = np.random.randint(params[0], params[1], rows)
+                elif col_type == "浮動小数":
+                    data[col_name] = np.random.uniform(params[0], params[1], rows)
+                elif col_type == "正規分布":
+                    data[col_name] = np.random.normal(params[0], params[1], rows)
+                elif col_type == "バイナリ":
+                    data[col_name] = np.random.choice([0, 1], rows, p=[1 - params[0], params[0]])
+                elif col_type == "カテゴリ":
+                    categories = ["A", "B", "C", "D"]
+                    data[col_name] = np.random.choice(categories, rows)
+            
+            data = pd.DataFrame(data)
+            
+            # バイアス適用
+            if apply_bias and bias_col in data.columns and bias_target_col in data.columns:
+                data.loc[data[bias_col] == 1, bias_target_col] += bias_value
+            
+            return data
+
+        # ユーザー入力
+        rows = st.number_input("サンプルサイズ", min_value=10, max_value=10000, value=300, step=10)
+        cols = st.number_input("カラム数", min_value=1, max_value=20, value=2, step=1)
+
+        # 列ごとの設定
+        col_names = []
+        col_types = []
+        col_params = []
         for i in range(cols):
-            col_name = col_names[i]
-            col_type = col_types[i]
-            params = col_params[i]
-            if col_type == "整数":
-                data[col_name] = np.random.randint(params[0], params[1], rows)
-            elif col_type == "浮動小数":
-                data[col_name] = np.random.uniform(params[0], params[1], rows)
+            col_name = st.text_input(f"列 {i+1} の名前", value=f"col_{i+1}")
+            col_names.append(col_name)
+            col_type = st.selectbox(f"列 {i+1} のデータ型", ["整数", "浮動小数", "正規分布", "バイナリ", "カテゴリ"], index=0)
+            col_types.append(col_type)
+            
+            if col_type in ["整数", "浮動小数"]:
+                min_val = st.number_input(f"{col_name} の最小値", value=0, step=1)
+                max_val = st.number_input(f"{col_name} の最大値", value=100, step=1)
+                col_params.append((min_val, max_val))
             elif col_type == "正規分布":
-                data[col_name] = np.random.normal(params[0], params[1], rows)
+                mean = st.number_input(f"{col_name} の平均", value=50, step=1)
+                std = st.number_input(f"{col_name} の標準偏差", value=15, step=1, min_value=1)
+                col_params.append((mean, std))
             elif col_type == "バイナリ":
-                data[col_name] = np.random.choice([0, 1], rows, p=[1 - params[0], params[0]])
-            elif col_type == "カテゴリ":
-                categories = ["A", "B", "C", "D"]
-                data[col_name] = np.random.choice(categories, rows)
-        
-        data = pd.DataFrame(data)
-        
-        # バイアス適用
-        if apply_bias and bias_col in data.columns and bias_target_col in data.columns:
-            data.loc[data[bias_col] == 1, bias_target_col] += bias_value
-        
-        return data
+                prob = st.number_input(f"{col_name} の1が出る確率", value=0.5, min_value=0.0, max_value=1.0, step=0.01)
+                col_params.append((prob,))
+            else:
+                col_params.append((None, None))
 
-    # ユーザー入力
-    rows = st.number_input("サンプルサイズ", min_value=10, max_value=10000, value=300, step=10)
-    cols = st.number_input("カラム数", min_value=1, max_value=20, value=2, step=1)
+        # オプションで加算バイアスを適用
+        apply_bias = st.checkbox("加算バイアスを適用する")
+        bias_col = st.text_input("バイアスの基準となるカラム名", value="") if apply_bias else ""
+        bias_target_col = st.text_input("バイアスを適用するカラム名", value="") if apply_bias else ""
+        bias_value = st.number_input("バイアス値", value=10, step=1) if apply_bias else 0
 
-    # 列ごとの設定
-    col_names = []
-    col_types = []
-    col_params = []
-    for i in range(cols):
-        col_name = st.text_input(f"列 {i+1} の名前", value=f"col_{i+1}")
-        col_names.append(col_name)
-        col_type = st.selectbox(f"列 {i+1} のデータ型", ["整数", "浮動小数", "正規分布", "バイナリ", "カテゴリ"], index=0)
-        col_types.append(col_type)
-        
-        if col_type in ["整数", "浮動小数"]:
-            min_val = st.number_input(f"{col_name} の最小値", value=0, step=1)
-            max_val = st.number_input(f"{col_name} の最大値", value=100, step=1)
-            col_params.append((min_val, max_val))
-        elif col_type == "正規分布":
-            mean = st.number_input(f"{col_name} の平均", value=50, step=1)
-            std = st.number_input(f"{col_name} の標準偏差", value=15, step=1, min_value=1)
-            col_params.append((mean, std))
-        elif col_type == "バイナリ":
-            prob = st.number_input(f"{col_name} の1が出る確率", value=0.5, min_value=0.0, max_value=1.0, step=0.01)
-            col_params.append((prob,))
-        else:
-            col_params.append((None, None))
+        # データ生成
+        if "data" not in st.session_state:
+            st.session_state["data"] = None
 
-    # オプションで加算バイアスを適用
-    apply_bias = st.checkbox("加算バイアスを適用する")
-    bias_col = st.text_input("バイアスの基準となるカラム名", value="") if apply_bias else ""
-    bias_target_col = st.text_input("バイアスを適用するカラム名", value="") if apply_bias else ""
-    bias_value = st.number_input("バイアス値", value=10, step=1) if apply_bias else 0
+        if st.button("データ生成"):
+            data = generate_data(rows, cols, col_names, col_types, col_params, apply_bias, bias_col, bias_value)
+            
+            if data is not None:  # データが正しく生成された場合のみ保存
+                st.session_state["data"] = data
+                st.success("データが生成されました。")
+            
+            # CSVダウンロード
+            csv_buffer = io.StringIO()
+            data.to_csv(csv_buffer, index=False)
+            csv_buffer.seek(0)
+            st.download_button(
+                label="ダウンロード",
+                data=csv_buffer.getvalue(),
+                file_name="sample_data.csv",
+                mime="text/csv"
+            )
 
-    # データ生成
-    if "data" not in st.session_state:
-        st.session_state["data"] = None
+        # データセットが空でない場合
+        if "data" in st.session_state and st.session_state["data"] is not None:
+            data = st.session_state["data"]
 
-    if st.button("データ生成"):
-        data = generate_data(rows, cols, col_names, col_types, col_params, apply_bias, bias_col, bias_value)
-        
-        if data is not None:  # データが正しく生成された場合のみ保存
-            st.session_state["data"] = data
-            st.success("データが生成されました。")
-        
-        # CSVダウンロード
-        csv_buffer = io.StringIO()
-        data.to_csv(csv_buffer, index=False)
-        csv_buffer.seek(0)
-        st.download_button(
-            label="ダウンロード",
-            data=csv_buffer.getvalue(),
-            file_name="sample_data.csv",
-            mime="text/csv"
-        )
+            option = st.selectbox(
+                "表示するデータを選択してください",
+                ["データフレーム",
+                "統計情報",
+                "データ型の確認",
+                "欠損値の確認",
+                "相関行列"
+                ]
+            )
 
-    # データセットが空でない場合
-    if "data" in st.session_state and st.session_state["data"] is not None:
-        data = st.session_state["data"]
+            if option == "データフレーム":
+                st.dataframe(data)
+            
+            elif option == "統計情報":
+                st.write(data.describe())
+            
+            elif option == "データ型の確認":
+                df_types = pd.DataFrame({'Column': data.columns, 'DataType': data.dtypes.values})
+                st.write(df_types)
 
-        option = st.selectbox(
-            "表示するデータを選択してください",
-            ["データフレーム",
-             "統計情報",
-             "データ型の確認",
-             "欠損値の確認",
-             "相関行列"
-            ]
-        )
+            elif option == "欠損値の確認":
+                missing_number = data.isnull().sum()
+                st.write(missing_number)
+            
+            elif option == "相関行列":
+                corr_matrix = data.corr()
+                fig_corr, ax = plt.subplots(figsize=(10, 6))
+                sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
+                st.pyplot(fig_corr)
 
-        if option == "データフレーム":
-            st.dataframe(data)
-        
-        elif option == "統計情報":
-            st.write(data.describe())
-        
-        elif option == "データ型の確認":
-            df_types = pd.DataFrame({'Column': data.columns, 'DataType': data.dtypes.values})
-            st.write(df_types)
+    # ファイルアップロードを選択した場合
+    elif option == "ファイルをアップロード":
+        uploaded_file = st.file_uploader("CSVファイルをアップロードしてください", type=["csv"])
+        if uploaded_file is not None:
+            data = pd.read_csv(uploaded_file)
 
-        elif option == "欠損値の確認":
-            missing_number = data.isnull().sum()
-            st.write(missing_number)
-        
-        elif option == "相関行列":
-            corr_matrix = data.corr()
-            fig_corr, ax = plt.subplots(figsize=(10, 6))
-            sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
-            st.pyplot(fig_corr)
+        if data is not None:
+            option = st.selectbox(
+                "表示するデータを選択してください",
+                ["データフレーム",
+                "統計情報",
+                "データ型の確認",
+                "欠損値の確認",
+                "相関行列"
+                ]
+            )
 
-# ファイルアップロードを選択した場合
-elif option == "ファイルをアップロード":
-    uploaded_file = st.file_uploader("CSVファイルをアップロードしてください", type=["csv"])
-    if uploaded_file is not None:
-        data = pd.read_csv(uploaded_file)
+            if option == "データフレーム":
+                st.dataframe(data)
+            
+            elif option == "統計情報":
+                st.write(data.describe())
+            
+            elif option == "データ型の確認":
+                df_types = pd.DataFrame({'Column': data.columns, 'DataType': data.dtypes.values})
+                st.write(df_types)
 
-    if data is not None:
-        option = st.selectbox(
-            "表示するデータを選択してください",
-            ["データフレーム",
-             "統計情報",
-             "データ型の確認",
-             "欠損値の確認",
-             "相関行列"
-            ]
-        )
-
-        if option == "データフレーム":
-            st.dataframe(data)
-        
-        elif option == "統計情報":
-            st.write(data.describe())
-        
-        elif option == "データ型の確認":
-            df_types = pd.DataFrame({'Column': data.columns, 'DataType': data.dtypes.values})
-            st.write(df_types)
-
-        elif option == "欠損値の確認":
-            missing_number = data.isnull().sum()
-            st.write(missing_number)
-        
-        elif option == "相関行列":
-            corr_matrix = data.corr()
-            fig_corr, ax = plt.subplots(figsize=(10, 6))
-            sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
-            st.pyplot(fig_corr)
+            elif option == "欠損値の確認":
+                missing_number = data.isnull().sum()
+                st.write(missing_number)
+            
+            elif option == "相関行列":
+                corr_matrix = data.corr()
+                fig_corr, ax = plt.subplots(figsize=(10, 6))
+                sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5, ax=ax)
+                st.pyplot(fig_corr)
 
 
 st.sidebar.markdown('---')
