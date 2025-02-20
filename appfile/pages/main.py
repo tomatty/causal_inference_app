@@ -5,10 +5,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib_fontja as mf
-import matplotlib.font_manager as fm
-# IPAexフォントを手動で設定
-font_path = "/usr/share/fonts/opentype/ipafont-mincho/ipam.ttf"  # 例: IPAフォントのパス
-prop = fm.FontProperties(fname=font_path)
 
 from scipy import stats
 import statsmodels.formula.api as smf
@@ -462,7 +458,7 @@ if st.session_state.normal_abtest_clicked:
 
         # 軸ラベル
         ax.set_ylabel(response_col)
-        ax.set_title("トリートメント群とコントロール群の比較", fontproperties=prop)
+        ax.set_title("Comparison of Treatment and Control Groups")
 
         # Streamlitに表示
         st.pyplot(fig)
