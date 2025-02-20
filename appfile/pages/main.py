@@ -438,30 +438,31 @@ if st.session_state.normal_abtest_clicked:
         col3.metric("P_value", f"{p_value:,.5f}", border=True)
 
         # グラフの描画
-        st.write("グラフ:")
-        fig, ax = plt.subplots()
+        if st.checkbox("グラフを表示"):
+            st.write("グラフ:")
+            fig, ax = plt.subplots()
 
-        # 棒グラフの描画
-        groups = ["Control Group(0)", "Treatment Group(1)"]
-        values = [df_result[0], df_result[1]]
-        ax.bar(groups, values, color=["blue", "red"], alpha=0.7)
+            # 棒グラフの描画
+            groups = ["Control Group(0)", "Treatment Group(1)"]
+            values = [df_result[0], df_result[1]]
+            ax.bar(groups, values, color=["blue", "red"], alpha=0.7)
 
-        # ATEの補助線を追加
-        ax.plot([0, 1], [df_result[0], df_result[0]], "k--", alpha=0.5)  # Controlの基準線
-        ax.plot([1, 1], [df_result[0], df_result[1]], "k-", lw=2)  # ATEの差を示す線
+            # ATEの補助線を追加
+            ax.plot([0, 1], [df_result[0], df_result[0]], "k--", alpha=0.5)  # Controlの基準線
+            ax.plot([1, 1], [df_result[0], df_result[1]], "k-", lw=2)  # ATEの差を示す線
 
-        # ATEを矢印で可視化
-        ax.annotate(f"ATE: {ate:.3f}", xy=(1, df_result[0] + ate / 2),
-                    xytext=(1.1, df_result[0] + ate / 2),
-                    arrowprops=dict(arrowstyle="->", lw=1.5),
-                    fontsize=12, color="black")
+            # ATEを矢印で可視化
+            ax.annotate(f"ATE: {ate:.3f}", xy=(1, df_result[0] + ate / 2),
+                        xytext=(1.1, df_result[0] + ate / 2),
+                        arrowprops=dict(arrowstyle="->", lw=1.5),
+                        fontsize=12, color="black")
 
-        # 軸ラベル
-        ax.set_ylabel(response_col)
-        ax.set_title("Comparison of Treatment and Control Groups")
+            # 軸ラベル
+            ax.set_ylabel(response_col)
+            ax.set_title("Comparison of Treatment and Control Groups")
 
-        # Streamlitに表示
-        st.pyplot(fig)
+            # Streamlitに表示
+            st.pyplot(fig)
 
     # 回帰分析の場合
     if option == "回帰分析":
