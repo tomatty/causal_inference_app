@@ -49,6 +49,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+
 st.sidebar.markdown('# 効果検証分析ツール')
 
 
@@ -325,7 +326,9 @@ if st.session_state.abtest_plan_clicked:
         {"設計項目": "割当比率", "設計内容": None},
         {"設計項目": "サンプルサイズ", "設計内容": None},
         {"設計項目": "SUTVAを満たしているか", "設計内容": None},
-        {"設計項目": "その他", "設計内容": None},
+        {"設計項目": "実験期間", "設計内容": None},
+        {"設計項目": "有意水準", "設計内容": None},
+        {"設計項目": "その他", "設計内容": None}
     ]
     )
     edited_df = st.data_editor(df, num_rows="dynamic", width=1000)
